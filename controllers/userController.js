@@ -13,9 +13,11 @@ async function executeQuery(query, values, res, successMessage) {
         const connection = await db.pool.getConnection();
         const [results] = await connection.query(query, values);
 
-        connection.release()
+        connection.release();
 
-        return [ 200, {message: successMessage, data: results}];
+        console.log(Date(), results)
+        return [200, { message: successMessage, data: results }];
+
     } catch (error) {
         console.error('Database query error:', error);
         res.status(500).json({ error: 'Database query error' });
@@ -30,7 +32,7 @@ const playerController = {
         if (!email || !username || !password) {
             return res.status(400).json({ error: 'All fields are required' });
         }
-        
+
         if (!emailRegex.test(email)) {
             return res.status(400).json({ error: 'Invalid email address' });
         }
@@ -73,7 +75,7 @@ const playerController = {
 
         try {
 
-            
+
             const userQuery = 'SELECT * FROM userTbl WHERE username = ? OR email = ?';
             const user = await executeQuery(userQuery, [username, username], res, '')
 
