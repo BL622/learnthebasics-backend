@@ -3,7 +3,8 @@ const app = express();
 const dotenv = require('dotenv');
 const cors = require('cors');
 const userRoutes = require('./routes/userRoutes');
-const gameRoutes = require('./routes/gameRoutes')
+const gameRoutes = require('./routes/gameRoutes');
+const { exec } = require('node:child_process');
 
 const PORT = process.env.PORT;
 
@@ -15,8 +16,8 @@ app.use('/player', userRoutes);
 app.use('/game', gameRoutes);
 
 app.get('/', (req, res) => {
-    res.send('Hello test koyeb push')
-  })
+  res.send('Server is running')
+});
 
 
 app.listen(PORT, function () {

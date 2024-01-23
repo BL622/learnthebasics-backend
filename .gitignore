@@ -83,6 +83,9 @@ web_modules/
 .cache
 .parcel-cache
 
+pull.bat
+start.bat
+
 # Next.js build output
 .next
 out
