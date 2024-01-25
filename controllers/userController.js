@@ -22,28 +22,48 @@ async function executeQuery(query, values, res, successMessage) {
     console.error("Database query error:", error);
     res.status(500).json({ error: "Database query error" });
   }
-}
+};
+
+const validateInputs = (inputs, validations) => {
+  for (const validation of validations) {
+    const { field, regex, errorMessage, required, specialCases } = validation;
+
+    if (required && (!inputs[field] || inputs[field].trim() === '')) {
+      return `${field} is required`;
+    }
+
+    if (field === 'confirmPassword') {
+      const password = inputs['password'];
+      if (required && (!inputs[field] || inputs[field].trim() === '')) {
+        return 'Confirm password is required';
+      }
+      if (inputs[field] !== password) {
+        return 'Password and confirm password do not match';
+      }
+    } else if (field === 'username' && specialCases && specialCases.includes(inputs[field])) {
+    } else if (!inputs[field] || (regex && !regex.test(inputs[field]))) {
+      return errorMessage;
+    }
+  }
+  return null;
+};
+
 
 const playerController = {
   registerPlayer: async function (req, res) {
     const { email, username, password, confirmPassword } = req.body;
     console.log(req.body);
-    if (!email || !username || !password) {
-      return res.status(400).json({ error: "All fields are required" });
-    }
+    
+    const validations = [
+      { field: 'email', regex: emailRegex, errorMessage: 'Invalid email address', required: true },
+      { field: 'username', regex: usernameRegex, errorMessage: 'Invalid username', required: true },
+      { field: 'password', regex: passwordRegex, errorMessage: 'Invalid password', required: true },
+      { field: 'confirmPassword', errorMessage: 'Invalid confirm password', required: true },
+    ];
 
-    if (!emailRegex.test(email)) {
-      return res.status(400).json({ error: "Invalid email address" });
-    }
-    if (!usernameRegex.test(username)) {
-      return res.status(400).json({ error: "The username must start with letters and 5-25 characters long" });
-    }
-    if (!passwordRegex.test(password)) {
-      return res.status(400).json({ error: "The password must contain:\n -At least ne uppercase character\n -At least one lowercase character\n -At least one special character: '@' '.' '#' '$' '!' '%' '?' '&'\n -8-24 charcters long" });
-    }
-
-    if (password !== confirmPassword) {
-      return res.status(400).json({ error: "Password and confirm password do not match" });
+    const validationError = validateInputs(req.body, validations);
+    if (validationError) {
+      return res.status(400).json({ error: validationError });
     }
 
     try {
@@ -90,14 +110,15 @@ const playerController = {
   loginUser: async function (req, res) {
     const { username, password } = req.body;
     console.log(req.body);
-    if (!username || !password) {
-      return res.status(400).json({ error: "Don't leave fields empty" });
-    }
-    if (!usernameRegex.test(username)) {
-      return res.status(400).json({ error: "Invalid username form input" });
-    }
-    if (!passwordRegex.test(password)) {
-      return res.status(400).json({ error: "Invalid password form input" });
+
+    const validations = [
+      { field: 'username', regex: usernameRegex, errorMessage: 'Invalid username', required: true, specialCases: ['admin'] },
+      { field: 'password', regex: passwordRegex, errorMessage: 'Invalid password', required: true },
+    ];
+
+    const validationError = validateInputs(req.body, validations);
+    if (validationError) {
+      return res.status(400).json({ error: validationError });
     }
 
     try {
@@ -133,12 +154,13 @@ const playerController = {
   forgotPassword: async function (req, res) {
     const { email } = req.body;
 
-    if (!email) {
-      return res.status(400).json({ error: 'Email is required!' });
-    }
+    const validations = [
+      { field: 'email', regex: emailRegex, errorMessage: 'Invalid email address', required: true },
+    ];
 
-    if (!emailRegex.test(email)) {
-      return res.status(400).json({ error: "Invalid email address" });
+    const validationError = validateInputs(req.body, validations);
+    if (validationError) {
+      return res.status(400).json({ error: validationError });
     }
 
     try {
@@ -208,12 +230,14 @@ const playerController = {
   resetPassword: async function (req, res) {
     const { resetToken, newPassword, confirmPassword } = req.body;
   
-    if (!newPassword || !passwordRegex.test(newPassword) || !confirmPassword || !passwordRegex.test(confirmPassword)) {
-      return res.status(400).json({ error: "Both new password and confirm password must meet the password requirements" });
-    }
-  
-    if (newPassword !== confirmPassword) {
-      return res.status(400).json({ error: "New password and confirm password do not match" });
+    const validations = [
+      { field: 'newPassword', regex: passwordRegex, errorMessage: 'Invalid new password', required: true },
+      { field: 'confirmPassword', errorMessage: 'Invalid confirm password', required: true },
+    ];
+
+    const validationError = validateInputs(req.body, validations);
+    if (validationError) {
+      return res.status(400).json({ error: validationError });
     }
   
     try {
