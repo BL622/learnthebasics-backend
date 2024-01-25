@@ -4,7 +4,6 @@ const dotenv = require('dotenv');
 const cors = require('cors');
 const userRoutes = require('./routes/userRoutes');
 const gameRoutes = require('./routes/gameRoutes');
-const { exec } = require('node:child_process');
 
 const PORT = process.env.PORT;
 
@@ -20,6 +19,4 @@ app.get('/', (req, res) => {
 });
 
 
-app.listen(PORT, function () {
-  console.log('Server running on http://localhost:' + PORT);
-});
+app.listen(PORT);
