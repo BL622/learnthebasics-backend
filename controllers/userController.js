@@ -3,6 +3,8 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
 const emailRegex = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/g;
+const usernameRegex = /^[a-zA-Z][a-zA-Z0-9_.-]{5,25}$/g;
+const passwordRegex = /^(?=.[a-z])(?=.[A-Z])(?=.\d)(?=.[@.#$!%?&^])[A-Za-z\d@.#$!%?&]{8,24}$/g;
 
 const emailController = require("./emailController");
 const tokenGeneration = require("./tokenGeneration");
@@ -33,7 +35,12 @@ const playerController = {
     if (!emailRegex.test(email)) {
       return res.status(400).json({ error: "Invalid email address" });
     }
-
+    if (!usernameRegex.test(username)) {
+      return res.status(400).json({ error: "The username must start with letters and 5-25 characters long" });
+    }
+    if (!passwordRegex.test(password)) {
+      return res.status(400).json({ error: "The password must contain:\n -At least ne uppercase character\n -At least one lowercase character\n -At least one special character: '@' '.' '#' '$' '!' '%' '?' '&'\n -8-24 charcters long" });
+    }
     try {
       // Check if email is already used
       const emailQuery = "SELECT * FROM userTbl WHERE email = ?";
@@ -81,6 +88,12 @@ const playerController = {
     if (!username || !password) {
       return res.status(400).json({ error: "Don't leave fields empty" });
     }
+    if (!usernameRegex.test(username)) {
+      return res.status(400).json({ error: "Invalid username form input" });
+    }
+    if (!passwordRegex.test(password)) {
+      return res.status(400).json({ error: "Invalid password form input" });
+    }
 
     try {
       const userQuery = "SELECT * FROM userTbl WHERE username = ? OR email = ?";
@@ -113,109 +126,122 @@ const playerController = {
   },
 
   forgotPassword: async function (req, res) {
-     const { email } = req.body;
-     console.log(req.body);
-        if (!email) {
-            return res.status(400).json({ error: 'Email is required!' });
-        }
+    const { email } = req.body;
 
-        try {
-            const query = 'SELECT * FROM userTbl WHERE email = ?';
-            const user = await executeQuery(query, email, res, '')
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required!' });
+    }
 
-            if (user[1].data.length === 0) {
-                return res.status(404).json({ error: 'User not found' });
-            }
-
-            // Check if the user's password reset token is already used
-            if (user[1].data[0].passwordResetToken && !user[1].data.isUsed) {
-                return res.status(400).json({ error: 'Password reset link has already been used' });
-            }
-
-            // Generate a reset token using JWT
-            const resetToken = tokenGeneration.generateToken(user[1].data[0].uid);
-
-            console.log(resetToken)
-
-            // // Set user's password reset token
-            const updateQuery = 'UPDATE userTbl SET passwordResetToken = ?, isUsed = false WHERE email = ?';
-            const updateValues = [resetToken, email];
-            await executeQuery(updateQuery, updateValues, res, '');
-
-            // // Send password reset email
-            const emailResult = await emailController.sendPasswordResetEmail(email, resetToken, user[0].username);
-
-            if (emailResult.success) {
-                res.status(200).json({ message: 'Password reset email sent successfully' });
-            } else {
-                res.status(500).json({ error: 'Error sending password reset email.' });
-            }
-        } catch (error) {
-            console.error('Error during password reset:', error);
-            res.status(500).json({ error: 'Password reset failed' });
-        }
-  },
-
-  resetPassword: async function (req, res) {
-    const { resetToken, newPassword } = req.body;
-    console.log(req.body);
-    if (!resetToken || !newPassword) {
-      return res
-        .status(400)
-        .json({ error: "Both token and the new password are required!" });
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ error: "Invalid email address" });
     }
 
     try {
-      const decoded = jwt.verify(resetToken, process.env.SECRET_KEY);
+      const query = 'SELECT * FROM userTbl WHERE email = ?';
+      const user = await executeQuery(query, email, res, '');
 
-      const query =
-        "SELECT * FROM userTbl WHERE uid = ? AND passwordResetToken = ? AND isUsed = false";
-      const results = await executeQuery(
-        query,
-        [decoded.userId, resetToken],
-        res,
-        ""
-      );
-
-      if (results[1].data[0].length === 0) {
-        connection.release();
-        return res
-          .status(400)
-          .json({ message: "Invalid or expired reset token" });
+      if (user[1].data.length === 0) {
+        return res.status(404).json({ error: 'User not found' });
       }
-      console.log(results[1].data[0].email);
 
-      // Update user's password and mark the reset token as used
-      const updateQuery =
-        "UPDATE userTbl SET password = ?, passwordResetToken = null, isUsed = true WHERE uid = ?";
-      const hashedPassword = await bcrypt.hash(newPassword, 10);
-      await executeQuery(
-        updateQuery,
-        [hashedPassword, decoded.userId],
-        res,
-        ""
-      );
+      const userToken = user[1].data[0].passwordResetToken;
 
-      const emailResult = await emailController.passwordResetSuccessful(
-        results[1].data[0].email,
-        results[1].data[0].username
-      );
+      if (userToken) {
+        try {
+          const decoded = jwt.verify(userToken, process.env.SECRET_KEY);
 
+          if (decoded.exp > Date.now() / 1000) {
+            return res.status(400).json({ message: 'Password reset email has already been sent' });
+          }
+        } catch (decodeError) {
+          console.error('Existing token verification failed or expired:', decodeError);
+
+          const resetToken = tokenGeneration.generateToken(user[1].data[0].uid);
+
+          console.log(resetToken);
+
+          const updateQuery = 'UPDATE userTbl SET passwordResetToken = ? WHERE email = ?';
+          const updateValues = [resetToken, email];
+          await executeQuery(updateQuery, updateValues, res, '');
+
+          const emailResult = await emailController.sendPasswordResetEmail(email, resetToken, user[1].data[0].username);
+
+          if (emailResult.success) {
+            return res.status(200).json({ message: 'New password reset email sent successfully' });
+          } else {
+            console.error('Error sending password reset email with new token:', emailResult.error);
+            return res.status(500).json({ error: 'Error sending password reset email with new token.' });
+          }
+        }
+      }
+
+
+      const resetToken = tokenGeneration.generateToken(user[1].data[0].uid);
+
+      console.log(resetToken);
+
+      const updateQuery = 'UPDATE userTbl SET passwordResetToken = ? WHERE email = ?';
+      const updateValues = [resetToken, email];
+      await executeQuery(updateQuery, updateValues, res, '');
+
+      // Send password reset email
+      const emailResult = await emailController.sendPasswordResetEmail(email, resetToken, user[1].data[0].username);
+
+      console.log(user[1].data[0])
       if (emailResult.success) {
-        res.status(200).json({
-          message:
-            "Password reset was successful and password changed email sent successfully",
+        res.status(200).json({ message: 'Password reset email sent successfully' });
+      } else {
+        res.status(500).json({ error: 'Error sending password reset email.' });
+      }
+    } catch (error) {
+      console.error('Error during password reset token generation:', error);
+      res.status(500).json({ error: 'Reset token set failed' });
+    }
+  },
+
+
+  resetPassword: async function (req, res) {
+    const { resetToken, newPassword, confirmPassword } = req.body;
+  
+    if (!newPassword || !passwordRegex.test(newPassword) || !confirmPassword || !passwordRegex.test(confirmPassword)) {
+      return res.status(400).json({ error: "Both new password and confirm password must meet the password requirements" });
+    }
+  
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({ error: "New password and confirm password do not match" });
+    }
+  
+    try {
+  
+      const query = "SELECT * FROM userTbl WHERE uid = ? AND passwordResetToken = ?";
+      const results = await executeQuery(query, [decoded.userId, resetToken], res, "");
+  
+      if (results[1].data.length === 0) {
+        return res.status(400).json({ message: "Invalid reset token" });
+      }
+  
+      const user = results[1].data[0];
+  
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+  
+      // Update user's password and mark the reset token as used
+      const updateQuery = "UPDATE userTbl SET password = ?, passwordResetToken = null WHERE uid = ?";
+      await executeQuery(updateQuery, [hashedPassword, user.uid], res, "");
+  
+      const emailResult = await emailController.passwordResetSuccessful(user.email, user.username);
+  
+      if (emailResult.success) {
+        return res.status(200).json({
+          message: "Password reset was successful and password changed email sent successfully",
         });
       } else {
-        res
-          .status(500)
-          .json({ error: "Error sending the password changed email" });
+        return res.status(500).json({ error: "Error sending the password changed email" });
       }
     } catch (error) {
       console.error("Error during password reset:", error);
-      res.status(400).json({ message: "Invalid or expired reset token" });
+      return res.status(400).json({ message: "Invalid reset token" });
     }
-  },
+  },  
 };
 
 module.exports = { playerController, executeQuery };
