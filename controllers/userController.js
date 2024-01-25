@@ -111,74 +111,47 @@ const playerController = {
   },
 
   forgotPassword: async function (req, res) {
-    const { email } = req.body;
+     const { email } = req.body;
 
-    if (!email) {
-      return res.status(400).json({ error: "Email is required!" });
-    }
+        if (!email) {
+            return res.status(400).json({ error: 'Email is required!' });
+        }
 
-    try {
-      const query = "SELECT * FROM userTbl WHERE email = ?";
-      const user = await executeQuery(query, email, res, "");
+        try {
+            const query = 'SELECT * FROM userTbl WHERE email = ?';
+            const user = await executeQuery(query, email, res, '')
 
-      if (user[1].data.length === 0) {
-        return res.status(404).json({ error: "User not found" });
-      }
+            if (user[1].data.length === 0) {
+                return res.status(404).json({ error: 'User not found' });
+            }
 
-      // Check if the user's password reset token is already used
-      if (user[1].data[0].passwordResetToken && !user[1].data.isUsed) {
-        // if (
-        //   jwt.decode(user[1].data[0].passwordResetToken).exp <
-        //   new Date().getTime()
-        // ) {
-        //   const resetToken = tokenGeneration.generateToken(user[1].data[0].uid);
-        //   const updateQuery =
-        //     "UPDATE userTbl SET passwordResetToken = ?, isUsed = false WHERE email = ?";
-        //   const updateValues = [resetToken, email];
-        //   await executeQuery(updateQuery, updateValues, res, "");
-        //   return res.status(400).json({ error: "Token expired" });
-        // } else {
-        //   return res
-        //     .status(400)
-        //     .json({ error: "Password reset link has already been used" });
-        // }
+            // Check if the user's password reset token is already used
+            if (user[1].data[0].passwordResetToken && !user[1].data.isUsed) {
+                return res.status(400).json({ error: 'Password reset link has already been used' });
+            }
 
-        const tokenexp = new Date().getDay;
-        const userTokenexp = jwt.decode(user[1].data[0].passwordResetToken).exp;
-        return res
-          .status(400)
-          .json({ tokenexp,userTokenexp });
-      }
+            // Generate a reset token using JWT
+            const resetToken = tokenGeneration.generateToken(user[1].data[0].uid);
 
-      // Generate a reset token using JWT
-      const resetToken = tokenGeneration.generateToken(user[1].data[0].uid);
+            console.log(resetToken)
 
-      console.log(resetToken);
+            // // Set user's password reset token
+            const updateQuery = 'UPDATE userTbl SET passwordResetToken = ?, isUsed = false WHERE email = ?';
+            const updateValues = [resetToken, email];
+            await executeQuery(updateQuery, updateValues, res, '');
 
-      // // Set user's password reset token
-      const updateQuery =
-        "UPDATE userTbl SET passwordResetToken = ?, isUsed = false WHERE email = ?";
-      const updateValues = [resetToken, email];
-      await executeQuery(updateQuery, updateValues, res, "");
+            // // Send password reset email
+            const emailResult = await emailController.sendPasswordResetEmail(email, resetToken, user[0].username);
 
-      // // Send password reset email
-      const emailResult = await emailController.sendPasswordResetEmail(
-        email,
-        resetToken,
-        user[0].username
-      );
-
-      if (emailResult.success) {
-        res
-          .status(200)
-          .json({ message: "Password reset email sent successfully" });
-      } else {
-        res.status(500).json({ error: "Error sending password reset email." });
-      }
-    } catch (error) {
-      console.error("Error during password reset:", error);
-      res.status(500).json({ error: "Password reset failed" });
-    }
+            if (emailResult.success) {
+                res.status(200).json({ message: 'Password reset email sent successfully' });
+            } else {
+                res.status(500).json({ error: 'Error sending password reset email.' });
+            }
+        } catch (error) {
+            console.error('Error during password reset:', error);
+            res.status(500).json({ error: 'Password reset failed' });
+        }
   },
 
   resetPassword: async function (req, res) {
