@@ -25,6 +25,7 @@ async function executeQuery(query, values, res, successMessage) {
 const playerController = {
   registerPlayer: async function (req, res) {
     const { email, username, password } = req.body;
+    console.log(req.body);
     if (!email || !username || !password) {
       return res.status(400).json({ error: "All fields are required" });
     }
@@ -76,6 +77,7 @@ const playerController = {
 
   loginUser: async function (req, res) {
     const { username, password } = req.body;
+    console.log(req.body);
     if (!username || !password) {
       return res.status(400).json({ error: "Don't leave fields empty" });
     }
@@ -112,7 +114,7 @@ const playerController = {
 
   forgotPassword: async function (req, res) {
      const { email } = req.body;
-
+     console.log(req.body);
         if (!email) {
             return res.status(400).json({ error: 'Email is required!' });
         }
@@ -156,7 +158,7 @@ const playerController = {
 
   resetPassword: async function (req, res) {
     const { resetToken, newPassword } = req.body;
-
+    console.log(req.body);
     if (!resetToken || !newPassword) {
       return res
         .status(400)
