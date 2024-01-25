@@ -40,8 +40,7 @@ const validateInputs = (inputs, validations) => {
       if (inputs[field] !== password) {
         return 'Password and confirm password do not match';
       }
-    } else if (field === 'username' && specialCases && specialCases.includes(inputs[field])) {
-    } else if (!inputs[field] || (regex && !regex.test(inputs[field]))) {
+    }else if (!inputs[field] || (regex && !regex.test(inputs[field]))) {
       return errorMessage;
     }
   }
@@ -112,7 +111,7 @@ const playerController = {
     console.log(req.body);
 
     const validations = [
-      { field: 'username', regex: usernameRegex, errorMessage: 'Invalid username', required: true, specialCases: ['admin'] },
+      { field: 'username', regex: usernameRegex, errorMessage: 'Invalid username', required: true },
       { field: 'password', regex: passwordRegex, errorMessage: 'Invalid password', required: true },
     ];
 
