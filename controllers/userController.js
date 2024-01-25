@@ -26,7 +26,7 @@ async function executeQuery(query, values, res, successMessage) {
 
 const playerController = {
   registerPlayer: async function (req, res) {
-    const { email, username, password } = req.body;
+    const { email, username, password, confirmPassword } = req.body;
     console.log(req.body);
     if (!email || !username || !password) {
       return res.status(400).json({ error: "All fields are required" });
@@ -41,6 +41,11 @@ const playerController = {
     if (!passwordRegex.test(password)) {
       return res.status(400).json({ error: "The password must contain:\n -At least ne uppercase character\n -At least one lowercase character\n -At least one special character: '@' '.' '#' '$' '!' '%' '?' '&'\n -8-24 charcters long" });
     }
+
+    if (password !== confirmPassword) {
+      return res.status(400).json({ error: "Password and confirm password do not match" });
+    }
+
     try {
       // Check if email is already used
       const emailQuery = "SELECT * FROM userTbl WHERE email = ?";
