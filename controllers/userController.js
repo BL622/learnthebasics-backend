@@ -231,7 +231,7 @@ const playerController = {
     const { resetToken, password } = req.body;
   
     const validations = [
-      { field: 'newPassword', regex: passwordRegex, errorMessage: 'Invalid new password', required: true },
+      { field: 'password', regex: passwordRegex, errorMessage: 'Invalid new password', required: true },
       { field: 'confirmPassword', errorMessage: 'Invalid confirm password', required: true },
     ];
 
