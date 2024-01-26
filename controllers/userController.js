@@ -2,9 +2,9 @@ const db = require("../config/db");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
-const emailRegex = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/g;
-const usernameRegex = /^[a-zA-Z][a-zA-Z0-9_.-]{4,24}$/g;
-const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@.#$!%?&^])[A-Za-z\d@.#$!%?&]{7,23}$/g;
+const emailRegex = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/;
+const usernameRegex = /^[a-zA-Z][a-zA-Z0-9_.-]{4,24}$/;
+const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@.#$!%?&^])[A-Za-z\d@.#$!%?&]{7,23}$/;
 
 const emailController = require("./emailController");
 const tokenGeneration = require("./tokenGeneration");
@@ -40,7 +40,8 @@ const validateInputs = (inputs, validations) => {
       if (inputs[field] !== password) {
         return 'Passwords do not match';
       }
-    }else if (!inputs[field] || (regex && !regex.test(inputs[field]))) {
+    }
+    else if (!inputs[field] || (regex && !regex.test(inputs[field]))) {
       return errorMessage;
     }
   }

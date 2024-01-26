@@ -25,7 +25,8 @@ const gameController = {
     },
 
     setSavesOrUpdate: async function (req, res){
-
+        const request = req.body.data;
+        console.log(request.saveId);
     }
 
 
