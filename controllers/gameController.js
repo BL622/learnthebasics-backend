@@ -1,10 +1,12 @@
 const db = require('../config/db');
-const { executeQuery } = require('./userController');
+const { executeQuery } = require('../sharedFunctions/functions');
 
 
 const gameController = {
 
     getSaves: async function (req, res) {
+
+        console.log(req.body.authCode.split(' ')[0])
 
         const username = req.body.authCode.split(' ')[0];
 

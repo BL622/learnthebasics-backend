@@ -23,7 +23,9 @@ function generateHtmlContentSuccessfulReset(username){
 async function sendPasswordResetEmail(userEmail, resetToken, username) {
   // Construct the reset link using the reset token
   const resetLink = `http://localhost:3000/password-reset/${resetToken}`;
-
+  console.log(userEmail)
+  console.log(resetToken)
+  console.log(username)
   // Email content
   const mailOptions = {
     from: 'noreply@learnthebasics.com',
