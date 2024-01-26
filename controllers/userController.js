@@ -251,7 +251,7 @@ const playerController = {
   
       const user = results[1].data[0];
   
-      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      const hashedPassword = await bcrypt.hash(password, 10);
   
       // Update user's password and mark the reset token as used
       const updateQuery = "UPDATE userTbl SET password = ?, passwordResetToken = null WHERE uid = ?";
