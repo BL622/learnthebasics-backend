@@ -228,7 +228,7 @@ const playerController = {
 
 
   resetPassword: async function (req, res) {
-    const { resetToken, newPassword } = req.body;
+    const { resetToken, password } = req.body;
   
     const validations = [
       { field: 'newPassword', regex: passwordRegex, errorMessage: 'Invalid new password', required: true },
