@@ -26,7 +26,7 @@ async function executeQuery(query, values, res, successMessage) {
 
 const validateInputs = (inputs, validations) => {
   for (const validation of validations) {
-    const { field, regex, errorMessage, required, specialCases } = validation;
+    const { field, regex, errorMessage, required } = validation;
 
     if (required && (!inputs[field] || inputs[field].trim() === '')) {
       return `${field} is required`;
@@ -38,7 +38,7 @@ const validateInputs = (inputs, validations) => {
         return 'Confirm password is required';
       }
       if (inputs[field] !== password) {
-        return 'Password and confirm password do not match';
+        return 'Passwords do not match';
       }
     }else if (!inputs[field] || (regex && !regex.test(inputs[field]))) {
       return errorMessage;
@@ -50,7 +50,7 @@ const validateInputs = (inputs, validations) => {
 
 const playerController = {
   registerPlayer: async function (req, res) {
-    const { email, username, password, confirmPassword } = req.body;
+    const { email, username, password } = req.body;
     console.log(req.body);
     
     const validations = [
@@ -227,7 +227,7 @@ const playerController = {
 
 
   resetPassword: async function (req, res) {
-    const { resetToken, newPassword, confirmPassword } = req.body;
+    const { resetToken, newPassword } = req.body;
   
     const validations = [
       { field: 'newPassword', regex: passwordRegex, errorMessage: 'Invalid new password', required: true },

@@ -11,7 +11,7 @@ const gameController = {
         const uIdQuery = 'SELECT uid FROM userTbl WHERE username = ?';
         const uId = await executeQuery(uIdQuery, username,res, "");
 
-        const query = "SELECT saveId, lvl, time, money, cpuId, gpuId, ramId, stgId FROM savedata "
+        const query = "SELECT saveId, lvl, time, money, cpuId, gpuId, ramId, stgId, lastBought FROM savedata "
             + "WHERE userId = ? "
             + "ORDER BY last_modified DESC";
         const savesResults = await executeQuery(query, uId[1].data[0].uid, res, 'Player found!');
@@ -23,6 +23,10 @@ const gameController = {
 
         res.status(savesResults[0]).json(savesResults[1]);
     },
+
+    setSavesOrUpdate: async function (req, res){
+
+    }
 
 
 
