@@ -7,14 +7,14 @@ const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@.#$!%?&^])[A-Za-z\d
 
 const emailController = require("./emailController");
 const tokenGeneration = require("./tokenGeneration");
-const { 
-  executeQuery, 
-  tryCatch, 
-  log, 
-  validateInputs, 
-  checkExistingUser, 
-  getUserByField, 
-  updateUserField 
+const {
+  executeQuery,
+  tryCatch,
+  log,
+  validateInputs,
+  checkExistingUser,
+  getUserByField,
+  updateUserField
 } = require('../sharedFunctions/functions')
 
 const playerController = {
@@ -132,7 +132,6 @@ const playerController = {
 
         await updateUserField('passwordResetToken', resetToken, 'email', email, '', res);
         const emailResult = await emailController.sendPasswordResetEmail(email, resetToken, user.username);
-        console.log(emailResult)
         if (emailResult.success) {
           return [200, { message: 'Password reset email sent successfully' }];
         } else {
