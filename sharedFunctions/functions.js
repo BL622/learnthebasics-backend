@@ -96,8 +96,7 @@ const checkExistingUser = async (field, value, errorMessage, res) => {
 const getUserByField = async (field, value, errorMessage, res) => {
   const result = await executeQuery(`SELECT * FROM userTbl WHERE ${field} = ?`, [value], `Query to check ${field} for password reset`, res, "");
   log(`Query results for ${field} check:\n${JSON.stringify(result[1].data)}`, "info");
-
-  if (result[1].data.length === 0) {
+  if (result[1].data.length == 0) {
     return [404, { error: `${field} not found` }];
   }
 

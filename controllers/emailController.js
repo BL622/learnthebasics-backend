@@ -1,69 +1,87 @@
 const transporter = require('../config/emailConfig');
-const fs = require('fs');
+const fs = require('fs').promises;
 const path = require('path');
+const { log, ErrorHandler } = require('../sharedFunctions/functions');
 
-function generateHtmlContentResetLink(resetLink, username) {
-  // Read the HTML template file
-  const templatePath = path.join(__dirname, '..', 'emailStyles', 'index.html');
-  const htmlContent = fs.readFileSync(templatePath, 'utf-8');
-
-  const replaceLink = `<a href="${resetLink}" target="_blank">Click here</a>`
-
-  var pageContent = htmlContent.replace('{{username}}', username).replace('<!--Link comes here-->', replaceLink);
-  return pageContent;
+async function readHtmlTemplate(templatePath) {
+  try {
+    return await fs.readFile(templatePath, 'utf-8');
+  } catch (error) {
+    const errorMessage = `Error reading HTML template from ${templatePath}: ${error.message}`;
+    log(errorMessage, 'error');
+    throw new Error(errorMessage);
+  }
 }
 
-function generateHtmlContentSuccessfulReset(username){
-  const templatePath = path.join(__dirname, '..', 'emailStyles', 'successful.html');
-  const htmlContent = fs.readFileSync(templatePath, 'utf-8');
-  return htmlContent.replace('{{username}}', username);
+async function generateHtmlContent(templatePath, replacements) {
+  try {
+    let htmlTemplate = await readHtmlTemplate(templatePath);
+
+    Object.entries(replacements).forEach(([key, value]) => {
+      const placeholder = new RegExp(`{{${key}}}`, 'g');
+      htmlTemplate = htmlTemplate.replace(placeholder, value);
+    });
+
+    return htmlTemplate;
+  } catch (error) {
+    const errorMessage = `Error generating HTML content: ${error.message}`;
+    log(errorMessage, 'error');
+    throw new Error(errorMessage);
+  }
 }
 
-// Function to send a password reset email
+async function sendMail(mailOptions) {
+  try {
+    const info = await transporter.sendMail(mailOptions);
+    log(`Email sent successfully. Message ID: ${info.messageId}`, 'success');
+    return { success: true, message: 'Email sent successfully.' };
+  } catch (error) {
+    const errorMessage = `Error sending email: ${error.message}`;
+    log(errorMessage, 'error');
+    throw new Error(errorMessage);
+  }
+}
+
 async function sendPasswordResetEmail(userEmail, resetToken, username) {
-  // Construct the reset link using the reset token
-  const resetLink = `http://localhost:3000/password-reset/${resetToken}`;
-  console.log(userEmail)
-  console.log(resetToken)
-  console.log(username)
-  // Email content
-  const mailOptions = {
-    from: 'noreply@learnthebasics.com',
-    to: userEmail,
-    subject: 'Password Reset',
-    html: generateHtmlContentResetLink(resetLink, username),
-  };
-
   try {
-    // Send email
-    const info = await transporter.sendMail(mailOptions);
-    console.log('Email sent:', info.messageId);
+    const resetLink = `http://localhost:3000/password-reset/${resetToken}`;
 
-    return { success: true, message: 'Password reset email sent successfully.' };
+    const templatePath = path.join(__dirname, '..', 'emailStyles', 'index.html');
+    const htmlContent = await generateHtmlContent(templatePath, {
+      username,
+      link: `<a href="${resetLink}" target="_blank">link</a>`,
+    });
+
+    const mailOptions = {
+      from: 'noreply@learnthebasics.com',
+      to: userEmail,
+      subject: 'Password Reset',
+      html: htmlContent,
+    };
+
+    return await sendMail(mailOptions);
   } catch (error) {
-    console.error('Error sending email:', error.message);
-    return { success: false, message: 'Error sending password reset email.' };
+    ErrorHandler.handle(null, error, 'Error sending password reset email:');
+    return { success: false, message: 'Error sending password reset email.', error };
   }
 }
 
-async function passwordResetSuccessful(userEmail, username){
-
-  const mailOptions = {
-    from: 'noreply@learnthebasics.com',
-    to: userEmail,
-    subject: 'Password Reset Successful',
-    html: generateHtmlContentSuccessfulReset(username)
-  }
-
+async function passwordResetSuccessful(userEmail, username) {
   try {
-    // Send email
-    const info = await transporter.sendMail(mailOptions);
-    console.log('Email sent:', info.messageId);
+    const templatePath = path.join(__dirname, '..', 'emailStyles', 'successful.html');
+    const htmlContent = await generateHtmlContent(templatePath, { username });
 
-    return { success: true, message: 'New password set email sent successful.' };
+    const mailOptions = {
+      from: 'noreply@learnthebasics.com',
+      to: userEmail,
+      subject: 'Password Reset Successful',
+      html: htmlContent,
+    };
+
+    return await sendMail(mailOptions);
   } catch (error) {
-    console.error('Error sending email:', error.message);
-    return { success: false, message: 'Error sending successful reset email.' };
+    ErrorHandler.handle(null, error, 'Error sending successful reset email:');
+    return { success: false, message: 'Error sending successful reset email.', error };
   }
 }
 

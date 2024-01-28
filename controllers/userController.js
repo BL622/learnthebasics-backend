@@ -72,6 +72,9 @@ const playerController = {
         }
 
         const user = await getUserByField("username", username, "User not found", res);
+        if (user[0] == 404) {
+          return user;
+        }
 
         const passwordMatch = await bcrypt.compare(password, user.password);
         if (!passwordMatch) {
@@ -102,6 +105,9 @@ const playerController = {
         }
 
         const user = await getUserByField('email', email, 'User not found', res);
+        if (user[0] == 404) {
+          return user;
+        }
         const userToken = user.passwordResetToken;
 
         if (userToken) {
@@ -120,10 +126,11 @@ const playerController = {
             const emailResult = await emailController.sendPasswordResetEmail(email, resetToken, user.username);
 
             if (emailResult.success) {
-              return [200, { message: 'New password reset email sent successfully' }];
+              log('Password reset email sent successfully', 'success');
+              return [200, { message: 'Password reset email sent successfully' }];
             } else {
-              log('Error sending password reset email with new token', 'error');
-              return [500, { error: 'Error sending password reset email with new token.' }];
+              log(`Error sending password reset email: ${emailResult.message}`, 'error');
+              return [500, { error: 'Error sending password reset email.' }];
             }
           }
         }
@@ -132,10 +139,12 @@ const playerController = {
 
         await updateUserField('passwordResetToken', resetToken, 'email', email, '', res);
         const emailResult = await emailController.sendPasswordResetEmail(email, resetToken, user.username);
+
         if (emailResult.success) {
+          log('Password reset email sent successfully', 'success');
           return [200, { message: 'Password reset email sent successfully' }];
         } else {
-          log('Error sending password reset email', 'error');
+          log(`Error sending password reset email: ${emailResult.message}`, 'error');
           return [500, { error: 'Error sending password reset email.' }];
         }
       },
@@ -161,6 +170,9 @@ const playerController = {
         }
 
         const user = await getUserByField("passwordResetToken", resetToken, "Invalid reset token", res);
+        if (user[0] == 404) {
+          return user;
+        }
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
