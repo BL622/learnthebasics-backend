@@ -1,5 +1,5 @@
 const db = require('../config/db');
-const { executeQuery, getUserIdByUsername, tryCatch, checkExistingSave, updateSave, createSave } = require('../sharedFunctions/functions');
+const { executeQuery, getUserIdByUsername, tryCatch, checkExistingSave, updateSave, createSave, log } = require('../sharedFunctions/functions');
 
 
 const gameController = {
