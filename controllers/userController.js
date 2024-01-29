@@ -193,6 +193,35 @@ const playerController = {
       res
     );
   },
+  validateToken: async function(req, res){
+    const { resetToken } = req.body;
+    log("Validating reset token:");
+  
+    await tryCatch(
+      async () => {
+        log("Verifying token...");
+        const decoded = jwt.verify(resetToken, process.env.SECRET_KEY);
+  
+        if (decoded.exp < Date.now() / 1000) {
+          log("Token is expired", 'error');
+          return [404, { error: 'Token is expired' }];
+        }
+  
+        log("Checking if token is in the database...", 'info');
+        const user = await getUserByField("passwordResetToken", resetToken, "Invalid reset token", res);
+        if (user[0] == 404) {
+          log("Token not found in the database", 'error');
+          return [404, { error: 'Token not found in the database' }];
+        }
+  
+        log("Token verification successful", 'success');
+        return [200, { message: 'Token verification successful' }];
+      },
+      "Error during token validation",
+      res
+    );
+  }
+  
 };
 
 module.exports = {
