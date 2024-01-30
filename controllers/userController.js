@@ -6,7 +6,7 @@ const usernameRegex = /^[a-zA-Z][a-zA-Z0-9_.-]{4,24}$/;
 const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@.#$!%?&^])[A-Za-z\d@.#$!%?&]{7,23}$/;
 
 const emailController = require("./emailController");
-const tokenGeneration = require("./tokenGeneration");
+const {tokenGeneration, createToken, decryptToken } = require("./tokenGeneration");
 const {
   executeQuery,
   tryCatch,
@@ -81,7 +81,11 @@ const playerController = {
           return [401, { error: "Invalid password" }];
         }
 
-        const informationSent = [user.username, user.password];
+        const informationSent = [
+          user.username, 
+          user.password,
+          createToken(user)
+        ];
         return [200, { message: "Login successful", data: informationSent }];
       },
       "Error during user login",
@@ -216,6 +220,21 @@ const playerController = {
   
         log("Token verification successful", 'success');
         return [200, { message: 'Token verification successful' }];
+      },
+      "Error during token validation",
+      res
+    );
+  },
+
+  decytionOfToken: async function(req, res){
+    const { resetToken } = req.body;
+    log("Validating reset token:");
+  
+    await tryCatch(
+      async () => {
+        const decryptedData = decryptToken(resetToken);
+
+        return [200, { message: 'Token verification successful', data: decryptedData }];
       },
       "Error during token validation",
       res
