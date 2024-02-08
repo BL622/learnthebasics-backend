@@ -1,12 +1,11 @@
 const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
 
 const emailRegex = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/;
 const usernameRegex = /^[a-zA-Z][a-zA-Z0-9_.-]{4,24}$/;
 const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@.#$!%?&^])[A-Za-z\d@.#$!%?&]{7,23}$/;
 
 const emailController = require("./emailController");
-const {tokenGeneration, createToken, decryptToken } = require("./tokenGeneration");
+const { createToken, decryptToken } = require("./tokenGeneration");
 const {
   executeQuery,
   tryCatch,
@@ -14,7 +13,9 @@ const {
   validateInputs,
   checkExistingUser,
   getUserByField,
-  updateUserField
+  handleApplicationLogin,
+  handleWebsiteLogin,
+  updateUserField,
 } = require('../sharedFunctions/functions')
 
 const playerController = {
@@ -66,27 +67,31 @@ const playerController = {
 
     await tryCatch(
       async () => {
+
         const validationError = validateInputs(req.body, validations);
         if (validationError) {
           return [400, { error: validationError }];
         }
 
-        const user = await getUserByField("username", username, "User not found", res);
-        if (user[0] == 404) {
-          return user;
+        // Check if the custom header 'X-App-Type' is present in the request
+        const appType = req.headers['x-app-type'];
+
+        if (!appType) {
+          // If X-App-Type is missing, send a response with just two pieces of information
+          const missingHeaderResponse = await handleApplicationLogin(username, password, res);
+          return missingHeaderResponse;
         }
 
-        const passwordMatch = await bcrypt.compare(password, user.password);
-        if (!passwordMatch) {
-          return [401, { error: "Invalid password" }];
+        let informationSent;
+        if (appType === 'website') {
+          informationSent = await handleWebsiteLogin(username, password, res);
+        } else if (appType === 'application') {
+          informationSent = await handleApplicationLogin(username, password, res);
+        } else {
+          informationSent = await handleApplicationLogin(username, password, res);;
         }
 
-        const informationSent = [
-          user.username, 
-          user.password,
-          createToken(user)
-        ];
-        return [200, { message: "Login successful", data: informationSent }];
+        return informationSent;
       },
       "Error during user login",
       res
@@ -112,18 +117,24 @@ const playerController = {
         if (user[0] == 404) {
           return user;
         }
+
         const userToken = user.passwordResetToken;
 
         if (userToken) {
           try {
-            const decoded = jwt.verify(userToken, process.env.SECRET_KEY);
+            const decoded = decryptToken(userToken);
 
-            if (decoded.exp > Date.now() / 1000) {
+            if (decoded.expires_at > Math.floor(Date.now() / 1000)) {
               return [400, { message: 'Password reset email has already been sent' }];
             }
           } catch (decodeError) {
             log('Existing token verification failed or expired', 'error');
-            const resetToken = tokenGeneration.generateToken(user.uid);
+            const resetToken = createToken({
+              uid: user.uid,
+              username: user.username,
+              password: user.hashedPassword,
+              isAdmin: user.isAdmin
+            }, 60);
 
             await updateUserField('passwordResetToken', resetToken, 'email', email, '', res);
 
@@ -139,7 +150,13 @@ const playerController = {
           }
         }
 
-        const resetToken = tokenGeneration.generateToken(user.uid);
+        const resetToken = createToken({
+          uid: user.uid,
+          username: user.username,
+          password: user.hashedPassword,
+          isAdmin: user.isAdmin
+        },
+          60);
 
         await updateUserField('passwordResetToken', resetToken, 'email', email, '', res);
         const emailResult = await emailController.sendPasswordResetEmail(email, resetToken, user.username);
@@ -151,6 +168,7 @@ const playerController = {
           log(`Error sending password reset email: ${emailResult.message}`, 'error');
           return [500, { error: 'Error sending password reset email.' }];
         }
+
       },
       "Error during password reset token generation",
       res
@@ -197,50 +215,40 @@ const playerController = {
       res
     );
   },
-  validateToken: async function(req, res){
+
+  validateToken: async function (req, res) {
     const { resetToken } = req.body;
     log("Validating reset token:");
-  
+
     await tryCatch(
       async () => {
         log("Verifying token...");
-        const decoded = jwt.verify(resetToken, process.env.SECRET_KEY);
-  
-        if (decoded.exp < Date.now() / 1000) {
-          log("Token is expired", 'error');
-          return [404, { error: 'Token is expired' }];
+        try {
+          const decoded = decryptToken(resetToken);
+
+          if (decoded.expires_at < Math.floor(Date.now() / 1000)) {
+            log("Token is expired", 'error');
+            return [404, { error: 'Token is expired' }];
+          }
+
+          log("Checking if token is in the database...", 'info');
+          const user = await getUserByField("passwordResetToken", resetToken, "Invalid reset token", res);
+          if (user[0] == 404) {
+            log("Token not found in the database", 'error');
+            return [404, { error: 'Token not found in the database' }];
+          }
+
+          log("Token verification successful", 'success');
+          return [200, { message: 'Token verification successful' }];
+        } catch (error) {
+          log("Token verification failed or invalid token", 'error');
+          return [400, { error: 'Token verification failed or invalid token' }];
         }
-  
-        log("Checking if token is in the database...", 'info');
-        const user = await getUserByField("passwordResetToken", resetToken, "Invalid reset token", res);
-        if (user[0] == 404) {
-          log("Token not found in the database", 'error');
-          return [404, { error: 'Token not found in the database' }];
-        }
-  
-        log("Token verification successful", 'success');
-        return [200, { message: 'Token verification successful' }];
       },
       "Error during token validation",
       res
     );
   },
-
-  decytionOfToken: async function(req, res){
-    const { resetToken } = req.body;
-    log("Validating reset token:");
-  
-    await tryCatch(
-      async () => {
-        const decryptedData = decryptToken(resetToken);
-
-        return [200, { message: 'Token verification successful', data: decryptedData }];
-      },
-      "Error during token validation",
-      res
-    );
-  }
-  
 };
 
 module.exports = {

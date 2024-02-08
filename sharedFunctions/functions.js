@@ -1,4 +1,6 @@
 const db = require("../config/db");
+const { createToken, decryptToken } = require('../controllers/tokenGeneration');
+const bcrypt = require('bcrypt')
 
 class ApiResponse {
   static send(res, statusCode, data) {
@@ -103,6 +105,46 @@ const getUserByField = async (field, value, errorMessage, res) => {
   return result[1].data[0];
 };
 
+const handleApplicationLogin = async (username, password, res) => {
+  const user = await getUserByField("username", username, "User not found", res);
+  if (user[0] == 404) {
+    return user;
+  }
+
+  const passwordMatch = await bcrypt.compare(password, user.password);
+  if (!passwordMatch) {
+    return [401, { error: "Invalid password" }];
+  }
+
+  return [
+    200,
+    {
+      message: "Login successful",
+      data: [user.username, createToken(user)]
+    }
+  ];
+};
+
+const handleWebsiteLogin = async (username, password, res) => {
+  const user = await getUserByField("username", username, "User not found", res);
+  if (user[0] == 404) {
+    return user;
+  }
+
+  const passwordMatch = await bcrypt.compare(password, user.password);
+  if (!passwordMatch) {
+    return [401, { error: "Invalid password" }];
+  }
+
+  return [
+    200,
+    {
+      message: "Login successful",
+      data: [user.username, createToken(user), user.password,]
+    }
+  ];
+};
+
 const updateUserField = async (field, newValue, conditionField, conditionValue, successMessage, res) => {
   await executeQuery(`UPDATE userTbl SET ${field} = ? WHERE ${conditionField} = ?`, [newValue, conditionValue], `Query to update ${field}`, res, successMessage);
 };
@@ -153,6 +195,8 @@ module.exports = {
   validateInputs,
   checkExistingUser,
   getUserByField,
+  handleApplicationLogin,
+  handleWebsiteLogin,
   updateUserField,
   getUserIdByUsername,
   checkExistingSave,

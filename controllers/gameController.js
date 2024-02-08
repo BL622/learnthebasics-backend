@@ -1,23 +1,30 @@
 const db = require('../config/db');
-const { executeQuery, getUserIdByUsername, tryCatch,log, checkExistingSave, updateSave, createSave } = require('../sharedFunctions/functions');
+const { executeQuery, getUserIdByUsername, tryCatch, log, checkExistingSave, updateSave, createSave } = require('../sharedFunctions/functions');
 
 
 const gameController = {
 
     getSaves: async function (req, res) {
         const authCode = req.body.authCode;
-        const username = authCode.split(' ')[0];
+        const [username, token] = authCode.split(' ');
 
         await tryCatch(
             async () => {
+                const decodedToken = decryptToken(token);
+
+                if (decodedToken.username !== username) {
+                    log("Username in the token does not match the provided username", 'error');
+                    return [400, { error: "Username in the token does not match the provided username" }];
+                }
+
                 const uId = await getUserIdByUsername(username, res);
 
                 const query = `
-                    SELECT saveId, lvl, time, money, cpuId, gpuId, ramId, stgId, lastBought
-                    FROM savedata
-                    WHERE userId = ?
-                    ORDER BY last_modified DESC
-                `;
+      SELECT saveId, lvl, time, money, cpuId, gpuId, ramId, stgId, lastBought
+      FROM savedata
+      WHERE userId = ?
+      ORDER BY last_modified DESC
+    `;
                 const savesResults = await executeQuery(query, uId, res, 'Player found!');
 
                 if (savesResults[1].data.length === 0) {
@@ -35,12 +42,18 @@ const gameController = {
 
     setSavesOrUpdate: async function (req, res) {
         const authCode = req.body.authCode;
-        const username = authCode.split(' ')[0];
+        const [username, token] = authCode.split(' ');
 
         await tryCatch(
             async () => {
-                const uId = await getUserIdByUsername(username, res);
+                const decodedToken = decryptToken(token);
 
+                if (decodedToken.username !== username) {
+                    log("Username in the token does not match the provided username", 'error');
+                    return [400, { error: "Username in the token does not match the provided username" }];
+                }
+
+                const uId = await getUserIdByUsername(username, res);
                 const savesData = req.body.data;
 
                 for (const save of savesData) {
