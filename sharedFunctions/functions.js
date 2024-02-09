@@ -38,10 +38,10 @@ function log(message, type) {
   console.log(coloredMessage);
 }
 
-async function tryCatch(callback, errorMessage, res, successMessage) {
+async function tryCatch(callback, errorMessage, res, successMessage = "Operation successful") {
   try {
     const result = await callback();
-    log(successMessage || "Operation successful", "success");
+    log(successMessage, "success");
     ApiResponse.send(res, result[0], result[1]);
   } catch (error) {
     const logMessage = errorMessage || "An error occurred";
