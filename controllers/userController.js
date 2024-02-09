@@ -73,11 +73,11 @@ const playerController = {
           return [400, { error: validationError }];
         }
 
-        // Check if the custom header 'X-App-Type' is present in the request
+
         const appType = req.headers['x-app-type'];
 
         if (!appType) {
-          // If X-App-Type is missing, send a response with just two pieces of information
+
           const missingHeaderResponse = await handleApplicationLogin(username, password, res);
           return missingHeaderResponse;
         }
@@ -129,12 +129,7 @@ const playerController = {
             }
           } catch (decodeError) {
             log('Existing token verification failed or expired', 'error');
-            const resetToken = createToken({
-              uid: user.uid,
-              username: user.username,
-              password: user.hashedPassword,
-              isAdmin: user.isAdmin
-            }, 60);
+            const resetToken = createToken(user, 60);
 
             await updateUserField('passwordResetToken', resetToken, 'email', email, '', res);
 
@@ -150,13 +145,7 @@ const playerController = {
           }
         }
 
-        const resetToken = createToken({
-          uid: user.uid,
-          username: user.username,
-          password: user.hashedPassword,
-          isAdmin: user.isAdmin
-        },
-          60);
+        const resetToken = createToken(user, 60);
 
         await updateUserField('passwordResetToken', resetToken, 'email', email, '', res);
         const emailResult = await emailController.sendPasswordResetEmail(email, resetToken, user.username);

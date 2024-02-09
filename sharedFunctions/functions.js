@@ -149,12 +149,6 @@ const updateUserField = async (field, newValue, conditionField, conditionValue, 
   await executeQuery(`UPDATE userTbl SET ${field} = ? WHERE ${conditionField} = ?`, [newValue, conditionValue], `Query to update ${field}`, res, successMessage);
 };
 
-const getUserIdByUsername = async (username, res) => {
-  const uIdQuery = 'SELECT uid FROM userTbl WHERE username = ?';
-  const uIdResult = await executeQuery(uIdQuery, username, res, "");
-  return uIdResult[1].data[0].uid;
-};
-
 const checkExistingSave = async (uId, saveId, res) => {
   const result = await executeQuery(`SELECT * FROM savedata WHERE userId = ? AND saveId = ?`, [uId, saveId], `Query to check existing save`, res, "");
   return result[1].data.length > 0;
@@ -198,7 +192,6 @@ module.exports = {
   handleApplicationLogin,
   handleWebsiteLogin,
   updateUserField,
-  getUserIdByUsername,
   checkExistingSave,
   updateSave,
   createSave

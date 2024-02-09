@@ -1,5 +1,5 @@
 const db = require('../config/db');
-const { executeQuery, getUserIdByUsername, tryCatch, log, checkExistingSave, updateSave, createSave } = require('../sharedFunctions/functions');
+const { executeQuery, tryCatch, log, checkExistingSave, updateSave, createSave } = require('../sharedFunctions/functions');
 const { decryptToken } = require('./tokenGeneration');
 
 
@@ -18,7 +18,7 @@ const gameController = {
                     return [400, { error: "Username in the token does not match the provided username" }];
                 }
 
-                const uId = await getUserIdByUsername(username, res);
+                const uId = decryptToken(token).uid;
 
                 const query = `
       SELECT saveId, lvl, time, money, cpuId, gpuId, ramId, stgId, lastBought
@@ -47,7 +47,14 @@ const gameController = {
 
         await tryCatch(
             async () => {
-                const uId = await getUserIdByUsername(username, res);
+                const decodedToken = decryptToken(token);
+
+                if (decodedToken.username !== username) {
+                    log("Username in the token does not match the provided username", 'error');
+                    return [400, { error: "Username in the token does not match the provided username" }];
+                }
+
+                const uId = decryptToken(token).uid;
                 const savesData = req.body.data;
 
                 for (const save of savesData) {
@@ -78,6 +85,13 @@ const gameController = {
 
         await tryCatch(
             async () => {
+                const decodedToken = decryptToken(token);
+
+                if (decodedToken.username !== username) {
+                    log("Username in the token does not match the provided username", 'error');
+                    return [400, { error: "Username in the token does not match the provided username" }];
+                }
+                
                 const uId = decryptToken(token).uid;
                 const deleteQuery = `DELETE FROM savedata WHERE userId = ? AND saveId = ?`;
                 const values = [uId, saveId];
