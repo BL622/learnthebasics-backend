@@ -4,6 +4,7 @@ const dotenv = require('dotenv');
 const cors = require('cors');
 const userRoutes = require('./routes/userRoutes');
 const gameRoutes = require('./routes/gameRoutes');
+const adminRoutes = require('./routes/adminRoutes')
 dotenv.config();
 
 const PORT = process.env.PORT;
@@ -14,6 +15,7 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use('/player', userRoutes);
 app.use('/game', gameRoutes);
+app.use('/admin', adminRoutes)
 
 app.get('/', (req, res) => {
   res.send('Server is running')

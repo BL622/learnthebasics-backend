@@ -1,4 +1,3 @@
-const db = require('../config/db');
 const { executeQuery, tryCatch, log, checkExistingSave, updateSave, createSave } = require('../sharedFunctions/functions');
 const { decryptToken } = require('./tokenGeneration');
 
@@ -95,11 +94,10 @@ const gameController = {
                 const uId = decryptToken(token).uid;
                 const deleteQuery = `DELETE FROM savedata WHERE userId = ? AND saveId = ?`;
                 const values = [uId, saveId];
-                const results = await executeQuery(deleteQuery, values, "Player save successfully deleted", res, "yippeeeee")
-                console.log(results);
-                return [200, { message: "Saves updated or created successfully", data: results }];
+                const results = await executeQuery(deleteQuery, values, "Player save successfully deleted", res)
+                return [200, { message: "Saves deleted successfully", data: results }];
             },
-            "Error updating or creating saves",
+            "Error during save delete",
             res
         )
     }

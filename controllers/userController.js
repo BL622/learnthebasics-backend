@@ -78,20 +78,12 @@ const playerController = {
 
         if (!appType) {
 
-          const missingHeaderResponse = await handleApplicationLogin(username, password, res);
-          return missingHeaderResponse;
-        }
-
-        let informationSent;
-        if (appType === 'website') {
-          informationSent = await handleWebsiteLogin(username, password, res);
-        } else if (appType === 'application') {
-          informationSent = await handleApplicationLogin(username, password, res);
+          const noHeaderResp = await handleApplicationLogin(username, password, res);
+          return noHeaderResp;
         } else {
-          informationSent = await handleApplicationLogin(username, password, res);;
+          const response = await handleWebsiteLogin(username, password, res);
+          return response;
         }
-
-        return informationSent;
       },
       "Error during user login",
       res
@@ -187,10 +179,10 @@ const playerController = {
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        await updateUserField("password", hashedPassword, "uid", user.uid, "Password reset successful", res);
-        await updateUserField("passwordResetToken", null, "uid", user.uid, "Reset token set to null", res);
+        await updateUserField("password", hashedPassword, "uid", decryptToken(resetToken).uid, "Password reset successful", res);
+        await updateUserField("passwordResetToken", null, "uid", decryptToken(resetToken).uid, "Reset token set to null", res);
 
-        const emailResult = await emailController.passwordResetSuccessful(user.email, user.username);
+        const emailResult = await emailController.passwordResetSuccessful(decryptToken(resetToken).email, decryptToken(resetToken).username);
 
         if (emailResult.success) {
           log("Password reset was successful and password changed email sent successfully", 'success');
@@ -201,40 +193,6 @@ const playerController = {
         }
       },
       "Error during password reset",
-      res
-    );
-  },
-
-  validateToken: async function (req, res) {
-    const { resetToken } = req.body;
-    log("Validating reset token:");
-
-    await tryCatch(
-      async () => {
-        log("Verifying token...");
-        try {
-          const decoded = decryptToken(resetToken);
-
-          if (decoded.expires_at < Math.floor(Date.now() / 1000)) {
-            log("Token is expired", 'error');
-            return [404, { error: 'Token is expired' }];
-          }
-
-          log("Checking if token is in the database...", 'info');
-          const user = await getUserByField("passwordResetToken", resetToken, "Invalid reset token", res);
-          if (user[0] == 404) {
-            log("Token not found in the database", 'error');
-            return [404, { error: 'Token not found in the database' }];
-          }
-
-          log("Token verification successful", 'success');
-          return [200, { message: 'Token verification successful' }];
-        } catch (error) {
-          log("Token verification failed or invalid token", 'error');
-          return [400, { error: 'Token verification failed or invalid token' }];
-        }
-      },
-      "Error during token validation",
       res
     );
   },
