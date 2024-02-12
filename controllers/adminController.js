@@ -19,4 +19,4 @@ const adminController = {
     },
 };
 
-module.exports = adminController;
+module.exports = {adminController};
