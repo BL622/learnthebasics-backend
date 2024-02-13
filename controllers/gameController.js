@@ -1,4 +1,4 @@
-const { executeQuery, tryCatch, log, checkExistingSave, updateSave, createSave } = require('../sharedFunctions/functions');
+const { executeQuery, tryCatch, log, checkExistingSave, updateSave, createSave, createSaveIfNotExists } = require('../sharedFunctions/functions');
 const { decryptToken } = require('./tokenGeneration');
 
 
@@ -46,30 +46,55 @@ const gameController = {
 
         await tryCatch(
             async () => {
-                const decodedToken = decryptToken(token);
-
-                if (decodedToken.username !== username) {
-                    log("Username in the token does not match the provided username", 'error');
-                    return [400, { error: "Username in the token does not match the provided username" }];
-                }
 
                 const uId = decryptToken(token).uid;
                 const savesData = req.body.data;
 
-                for (const save of savesData) {
-                    const saveId = save.saveId;
-                    const existingSave = await checkExistingSave(uId, saveId, res);
-
-                    if (existingSave) {
-                        // Update existing save
-                        await updateSave(uId, save, res);
+                const appType = req.headers['x-save-type'];
+                switch (appType) {
+                    case null:
+                        for (const save of savesData) {
+                            const saveId = save.saveId;
+                            const existingSave = await checkExistingSave(uId, saveId, res);
+        
+                            if (existingSave) {
+                                // Save exists 
+                                log(`Save with ID ${saveId} already exists`, 'info');
+                                return [450, { message: `Would you like to override your  existing save with this name?`}]
+                                
+                            } else {
+                                // Create new save
+                                await createSave(uId, saveId, res);
+                                log(`Save with ID ${saveId} created successfully`, 'success');
+                            }
+                        }
+                        break;
+                    case update:
+                        for (const save of savesData) {
+                            const saveId = save.saveId;
+                            const existingSave = await checkExistingSave(uId, saveId, res);
+        
+                            if (existingSave) {
+                                // Update existing save
+                                await updateSave(uId, save, res);
+                                log(`Save with ID ${saveId} updated successfully`, 'success');
+                            } else {
+                                // Create new save
+                                await createSaveIfNotExists(uId, save, res);
+                                log(`Save with ID ${saveId} created successfully`, 'success');
+                            }
+                        };
+                        break;
+                    case override:
+                        const overrideQuery = `UPDATE savedata SET lvl=0,money=0,time=0,cpuId=0,gpuId=0,ramId=0,stgId=0,lastBought='{\"cpu\":0,\"gpu\":0,\"ram\":0,\"stg\":0}' WHERE userId = ? AND saveId = ?`;
+                        const overrideValues = [savesData.saveId, uId];
+                        await executeQuery(overrideQuery, overrideValues, 'Overriding existing savefile', res, 'Successful override');
                         log(`Save with ID ${saveId} updated successfully`, 'success');
-                    } else {
-                        // Create new save
-                        await createSave(uId, save, res);
-                        log(`Save with ID ${saveId} created successfully`, 'success');
-                    }
+                        break;
+                    default:
+                        break;
                 }
+                
 
                 log("Saves updated or created successfully", 'success');
                 return [200, { message: "Saves updated or created successfully" }];

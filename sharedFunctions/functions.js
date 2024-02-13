@@ -169,7 +169,17 @@ const updateSave = async (uId, save, res) => {
   await executeQuery(updateQuery, updateValues, `Query to update save`, res, "Save updated successfully");
 }
 
-const createSave = async (uId, save, res) => {
+const createSave = async (uId, saveId, res) => {
+  const insertQuery = `CALL createFirstSaveFile(?,?)`;
+
+  const insertValues = [
+    saveId, uId
+  ];
+
+  await executeQuery(insertQuery, insertValues, `Query to create save`, res, "Save created successfully");
+};
+
+const createSaveIfNotExists = async (uId, save, res) => {
   const insertQuery = `
       INSERT INTO savedata (userId, saveId, lvl, time, money, cpuId, gpuId, ramId, stgId, lastBought)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -194,5 +204,6 @@ module.exports = {
   updateUserField,
   checkExistingSave,
   updateSave,
-  createSave
+  createSave,
+  createSaveIfNotExists
 };
