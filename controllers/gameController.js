@@ -119,8 +119,8 @@ const gameController = {
                 const uId = decryptToken(token).uid;
                 const deleteQuery = `DELETE FROM savedata WHERE userId = ? AND saveId = ?`;
                 const values = [uId, saveId];
-                const results = await executeQuery(deleteQuery, values, "Player save successfully deleted", res)
-                return [200, { message: "Saves deleted successfully", data: results }];
+                const results = await executeQuery(deleteQuery, values, "Player save successfully deleted", res, 'Saves deleted successfully')
+                return results;
             },
             "Error during save delete",
             res
