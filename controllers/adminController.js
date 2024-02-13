@@ -34,7 +34,7 @@ const adminController = {
         await tryCatch(
             async () => {
                 log('Admin page data:');
-                const query = 'SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA LIKE ?';
+                const query = 'SELECT TABLE_NAME, COLUMN_NAME, COLUMN_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ?';
                 const tableName = 'learnthebasics'
                 const results = await executeQuery(query, tableName, 'Query to get all table names!', res, 'Table names select was successful');
                 return results
