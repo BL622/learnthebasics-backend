@@ -23,7 +23,7 @@ const gameController = {
       SELECT saveId, lvl, time, money, cpuId, gpuId, ramId, stgId, lastBought
       FROM savedata
       WHERE userId = ?
-      ORDER BY last_modified DESC
+      ORDER BY lastModified DESC
     `;
                 const savesResults = await executeQuery(query, uId, res, 'Player found!');
 
