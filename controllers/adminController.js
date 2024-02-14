@@ -35,8 +35,8 @@ const adminController = {
             async () => {
                 log('Admin page data:');
                 const query = 'SELECT TABLE_NAME, COLUMN_NAME, COLUMN_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ?';
-                const tableName = 'learnthebasics'
-                const results = await executeQuery(query, tableName, 'Query to get all table names!', res, 'Table names select was successful');
+                const databaseName = 'learnthebasics'
+                const results = await executeQuery(query, databaseName, 'Query to get all table names!', res, 'Table names select was successful');
                 return results
             },
             "Error during table names query",
@@ -44,6 +44,20 @@ const adminController = {
             "Successful query"
         )
     },
+    getRowsByTableName: async function (req, res) {
+        const {tableName} = req.body;
+        await tryCatch(
+            async () => {
+                log('Select table rows');
+                const query = 'SELECT * FROM ?';
+                const results = await executeQuery(query, tableName, `Query to select all rows from table ${tableName}`, res, 'Table rows select was successful');
+                return results;
+            },
+            "Error during select all data by table name",
+            res,
+            'Successful selection'
+        )
+    }
 };
 
 module.exports = {adminController};
