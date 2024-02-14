@@ -51,6 +51,14 @@ const adminController = {
                 log('Select table rows');
                 const query = 'SELECT * FROM ' + tableName;
                 const results = await executeQuery(query, '', `Query to select all rows from table ${tableName}`, res, 'Table rows select was successful');
+
+                results[1].data.forEach(element => {
+                    if (element.isAdmin === 1) {
+                        element.isAdmin = true;
+                    }else{
+                        element.isAdmin = false
+                    }
+                })
                 return results;
             },
             "Error during select all data by table name",
