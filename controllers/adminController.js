@@ -49,8 +49,8 @@ const adminController = {
         await tryCatch(
             async () => {
                 log('Select table rows');
-                const query = 'SELECT * FROM ?';
-                const results = await executeQuery(query, tableName, `Query to select all rows from table ${tableName}`, res, 'Table rows select was successful');
+                const query = 'SELECT * FROM ' + tableName;
+                const results = await executeQuery(query, '', `Query to select all rows from table ${tableName}`, res, 'Table rows select was successful');
                 return results;
             },
             "Error during select all data by table name",
