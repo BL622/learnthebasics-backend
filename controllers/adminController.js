@@ -66,6 +66,25 @@ const adminController = {
             res,
             'Successful selection'
         )
+    },
+
+    insertRows: async function (req, res){
+       
+                log('Inserting new rows');
+                const insertMap = new Map();
+                console.log(Object.keys(req.body.data[0]).length)
+                const insertQuery = `INSERT INTO ? (${Object.keys(req.body.data[0]).join(", ")})`
+                // for (const [key, value] of Object.entries(req.body.data[0])) {
+                //     if (!insertMap.has(key)) {
+                //         insertMap.set(key, value);
+                //     }
+                //     else{
+                //         insertMap.set(key, value)
+                //     }
+                // }
+                
+                console.log(insertQuery)
+        
     }
 };
 
