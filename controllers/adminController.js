@@ -1,9 +1,9 @@
 const { executeQuery, tryCatch, log, checkExistingSave, updateSave, createSave } = require('../sharedFunctions/functions');
-const {decryptToken} = require('./tokenGeneration');
+const { decryptToken } = require('./tokenGeneration');
 
 
 const adminController = {
-    isAdmin: async function (req, res){
+    isAdmin: async function (req, res) {
         const authCode = req.body.authCode;
         const [username, token] = authCode.split(' ');
         await tryCatch(
@@ -19,11 +19,11 @@ const adminController = {
                     result[1].data[0].isAdmin = true;
                     return result
                 }
-                else{
+                else {
                     result[1].data[0].isAdmin = false;
-                    return result 
+                    return result
                 }
-                
+
             },
             "Error during isAdmin check",
             res,
@@ -45,21 +45,21 @@ const adminController = {
         )
     },
     getRowsByTableName: async function (req, res) {
-        const {tableName} = req.body;
+        const { tableName } = req.body;
         await tryCatch(
             async () => {
                 log('Select table rows');
                 const query = 'SELECT * FROM ' + tableName;
                 const results = await executeQuery(query, '', `Query to select all rows from table ${tableName}`, res, 'Table rows select was successful');
-                if(tableName === "userTbl"){
-                results[1].data.forEach(element => {
-                    if (element.isAdmin === 1) {
-                        element.isAdmin = true;
-                    }else{
-                        element.isAdmin = false
-                    }
-                })
-            }
+                if (tableName === "userTbl") {
+                    results[1].data.forEach(element => {
+                        if (element.isAdmin === 1) {
+                            element.isAdmin = true;
+                        } else {
+                            element.isAdmin = false
+                        }
+                    })
+                }
                 return results;
             },
             "Error during select all data by table name",
@@ -68,24 +68,49 @@ const adminController = {
         )
     },
 
-    insertRows: async function (req, res){
-       
+    insertRows: async function (req, res) {
+        await tryCatch(
+            async () => {
                 log('Inserting new rows');
-                const insertMap = new Map();
-                console.log(Object.keys(req.body.data[0]).length)
-                const insertQuery = `INSERT INTO ? (${Object.keys(req.body.data[0]).join(", ")})`
-                // for (const [key, value] of Object.entries(req.body.data[0])) {
-                //     if (!insertMap.has(key)) {
-                //         insertMap.set(key, value);
-                //     }
-                //     else{
-                //         insertMap.set(key, value)
-                //     }
-                // }
-                
-                console.log(insertQuery)
-        
+                const insertQuery = `INSERT INTO ${req.body.tableName} SET ?`
+                const result = await executeQuery(insertQuery, [req.body.data[0]], `Inserting new row into ${req.body.tableName}`, res, "Successful data insertion");
+                return result;
+            },
+            "Error during data insertion",
+            res,
+            "Successful insert"
+        )
+    },
+
+    updateRows: async function (req, res) {
+        await tryCatch(
+            async () => {
+                log('Updating rows');
+                const updateQuery = `UPDATE ${req.body.tableName} SET ? WHERE ${Object.keys(req.body.data[0])[0]} = ?`;
+                const result = await executeQuery(updateQuery, [req.body.data[0], Object.values(req.body.data[0])[0]], `Update ${req.body.tableName}`, res, "Successful update");
+                return result
+            },
+            "Error during update",
+            res,
+            "Successful update"
+        )
+    },
+
+    deleteRows: async function (req, res) {
+
+        await tryCatch(
+            async () => {
+                log('Delete rows');
+                const deleteQuery = `DELETE FROM ${req.body.tableName} WHERE ${Object.keys(req.body)[1]} = ?`;
+                const result = await executeQuery(deleteQuery, Object.values(req.body)[1], `Delete from ${req.body.tableName} by id: ${Object.values(req.body)[1]}`, res, "Successful update");
+                return result;
+            },
+            "Error during delete",
+            res,
+            "Successful delete"
+        )
     }
+
 };
 
-module.exports = {adminController};
+module.exports = { adminController };
