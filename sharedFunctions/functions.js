@@ -1,6 +1,6 @@
 const db = require("../config/db");
-const { createToken, decryptToken } = require('../controllers/tokenGeneration');
-const bcrypt = require('bcrypt')
+const { createToken } = require('../controllers/tokenGeneration');
+const bcrypt = require('bcrypt');
 
 class ApiResponse {
   static send(res, statusCode, data) {
@@ -9,15 +9,9 @@ class ApiResponse {
 }
 
 class ErrorHandler {
-  static handle(res, error, defaultMessage) {
-    let errorMessage = defaultMessage;
-
-    if (error instanceof Error) {
-      errorMessage = error.message;
-    }
-
-    log(errorMessage || "An error occurred", 'error');
-
+  static handle(res, error, defaultMessage = "An error occurred") {
+    const errorMessage = (error instanceof Error) ? error.message : defaultMessage;
+    log(errorMessage, 'error');
     return ApiResponse.send(res, 500, { error: errorMessage });
   }
 }
@@ -33,10 +27,30 @@ function log(message, type) {
   const color = colors[type] || "\x1b[37m"; // Default to white
 
   const formattedTimestamp = `[${new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '')}] - `;
-  const coloredMessage = `${color}${formattedTimestamp}${message.replace(/\n/g, `\n${formattedTimestamp}`)}${resetColor}`;
+  const coloredMessage = `${color}${formattedTimestamp}${formatMessage(message)}${resetColor}`;
 
   console.log(coloredMessage);
 }
+
+function formatMessage(message) {
+  if (Array.isArray(message)) {
+    return formatArray(message);
+  } else if (typeof message === 'object' && message !== null) {
+    return formatObject(message);
+  } else {
+    return message;
+  }
+}
+
+function formatArray(arr) {
+  return `[${arr.map(formatMessage).join(', ')}]`;
+}
+
+function formatObject(obj) {
+  const entries = Object.entries(obj).map(([key, value]) => `${key}: ${formatMessage(value)}`);
+  return `{ ${entries.join(', ')} }`;
+}
+
 
 async function tryCatch(callback, errorMessage, res, successMessage = "Operation successful") {
   try {
@@ -63,27 +77,42 @@ async function executeQuery(query, values, logMessage, res, successMessage) {
 }
 
 const validateInputs = (inputs, validations) => {
+  const keys = Object.keys(inputs);
+
+  // Check if all required fields are present
   for (const validation of validations) {
-    const { field, regex, errorMessage, required } = validation;
-
-    if (required && (!inputs[field] || inputs[field].trim() === '')) {
-      return `${field} is required`;
+    const { field, required } = validation;
+    if (required && !keys.includes(field)) {
+      return `Required field "${field}" is missing in the request body`;
     }
+  }
 
-    if (field === 'confirmPassword') {
-      const password = inputs['password'];
-      if (required && (!inputs[field] || inputs[field].trim() === '')) {
-        return 'Confirm password is required';
-      }
-      if (inputs[field] !== password) {
-        return 'Password and confirm password do not match';
-      }
-    } else if (!inputs[field] || (regex && !regex.test(inputs[field]))) {
+  // Check for unexpected keys
+  for (const key of keys) {
+    const isUnexpected = !validations.some(validation => validation.field === key);
+    if (isUnexpected) {
+      return `Unexpected field "${key}" in the request body`;
+    }
+  }
+
+  const password = inputs['password'];
+  const confirmPassword = inputs['confirmPassword'];
+  if (password !== confirmPassword) {
+    return 'Password and Confirm Password do not match';
+  }
+
+  // Validate inputs based on regex
+  for (const validation of validations) {
+    const { field, regex, errorMessage } = validation;
+    if (regex && !regex.test(inputs[field])) {
       return errorMessage;
     }
   }
+
   return null;
 };
+
+
 const checkExistingUser = async (field, value, errorMessage, res) => {
   const result = await executeQuery(`SELECT * FROM userTbl WHERE ${field} = ?`, [value], `Query to check existing ${field}`, res, "");
   log(`Query results for registration ${field} check:\n${JSON.stringify(result[1].data)}`, "info");
