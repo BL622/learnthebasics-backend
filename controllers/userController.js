@@ -157,13 +157,12 @@ const playerController = {
             try {
               const decoded = decryptToken(userToken);
 
-              if (decoded.expires_at > Math.floor(Date.now() / 1000)) {
-                log('Password reset email has already been sent', 'error');
-                return [400, { message: 'Password reset email has already been sent' }];
-              }
-            } catch (decodeError) {
-              log('Existing token verification failed or expired', 'error');
-              const resetToken = createToken(user, 60);
+            if (decoded.expires_at > Math.floor(Date.now() / 1000)) {
+              return [400, { message: 'Password reset email has already been sent' }];
+            }
+          } catch (decodeError) {
+            log('Existing token verification failed or expired', 'error');
+            const resetToken = createToken(user, 60);
 
               await updateUserField('passwordResetToken', resetToken, 'email', email, '', res);
 
