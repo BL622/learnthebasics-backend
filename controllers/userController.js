@@ -117,7 +117,7 @@ const playerController = {
             const decoded = decryptToken(userToken);
 
             if (decoded.expires_at > Math.floor(Date.now() / 1000)) {
-              return [400, { message: 'Password reset email has already been sent' }];
+              return [400, { error: 'Password reset email has already been sent' }];
             }
           } catch (decodeError) {
             log('Existing token verification failed or expired', 'error');
