@@ -17,7 +17,7 @@ const gameController = {
                     return [400, { error: "Username in the token does not match the provided username" }];
                 }
 
-                const uId = decryptToken(token).uid;
+                const uId = decodedToken.uid;
 
                 const query = `
       SELECT saveId, lvl, time, money, cpuId, gpuId, ramId, stgId, lastBought
@@ -46,8 +46,13 @@ const gameController = {
 
         await tryCatch(
             async () => {
-
-                const uId = decryptToken(token).uid;
+                const decodedToken = decryptToken(token);
+                if (decodedToken.username !== username) {
+                    log("Username in the token does not match the provided username", 'error');
+                    return [400, { error: "Username in the token does not match the provided username" }];
+                }
+                
+                const uId = decodedToken.uid;
                 const savesData = req.body.data;
 
                 const appType = req.headers['x-save-type'];

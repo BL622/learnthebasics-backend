@@ -2,11 +2,6 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const dotenv = require('dotenv');
 
-function generateToken(userId) {
-  return jwt.sign({ userId }, process.env.SECRET_KEY, { expiresIn: '1h' });
-};
-
-
 const secretKey = Buffer.from('My6VoJly9V2d9qJpIkZgD5V7cHokeCdr', 'utf-8');
 
 const createToken = (userData, expirationTimeInMinutes = null) => {
@@ -66,4 +61,4 @@ const decryptToken = (token) => {
   return tokenData;
 };
 
-module.exports = { generateToken, createToken, decryptToken };
+module.exports = { createToken, decryptToken };

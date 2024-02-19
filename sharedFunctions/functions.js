@@ -24,7 +24,7 @@ function log(message, type) {
   };
 
   const resetColor = "\x1b[0m";
-  const color = colors[type] || "\x1b[37m"; // Default to white
+  const color = colors[type] || resetColor; // Default to white
 
   const formattedTimestamp = `[${new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '')}] - `;
   const coloredMessage = `${color}${formattedTimestamp}${formatMessage(message)}${resetColor}`;
