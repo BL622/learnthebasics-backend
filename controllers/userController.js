@@ -13,7 +13,6 @@ const {
 const emailController = require("./emailController");
 const { createToken, decryptToken } = require("./tokenGeneration");
 
-const emailRegex = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/;
 const usernameRegex = /^[a-zA-Z][a-zA-Z0-9_.-]{4,24}$/;
 const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@.#$!%?&^])[A-Za-z\d@.#$!%?&]{7,23}$/;
 
@@ -158,7 +157,7 @@ const playerController = {
               const decoded = decryptToken(userToken);
 
             if (decoded.expires_at > Math.floor(Date.now() / 1000)) {
-              return [400, { message: 'Password reset email has already been sent' }];
+              return [400, { error: 'Password reset email has already been sent' }];
             }
           } catch (decodeError) {
             log('Existing token verification failed or expired', 'error');
