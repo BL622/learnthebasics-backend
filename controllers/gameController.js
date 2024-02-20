@@ -9,6 +9,9 @@ const gameController = {
         const [username, token] = authCode.split(' ');
 
         await tryCatch(
+            "Error fetching saves",
+            res,
+            "",
             async () => {
                 const decodedToken = decryptToken(token);
 
@@ -34,9 +37,7 @@ const gameController = {
 
                 log("Saves retrieved successfully", 'success');
                 return [savesResults[0], { message: "Saves retrieved successfully", data: savesResults[1].data }];
-            },
-            "Error fetching saves",
-            res
+            }
         );
     },
 
@@ -45,6 +46,9 @@ const gameController = {
         const [username, token] = authCode.split(' ');
 
         await tryCatch(
+            "Error updating or creating saves",
+            res,
+            "",
             async () => {
                 const decodedToken = decryptToken(token);
                 if (decodedToken.username !== username) {
@@ -103,9 +107,7 @@ const gameController = {
 
                 log("Saves updated or created successfully", 'success');
                 return [200, { message: "Saves updated or created successfully" }];
-            },
-            "Error updating or creating saves",
-            res
+            }
         );
     },
     deleteSave: async function (req, res) {
@@ -113,6 +115,9 @@ const gameController = {
         const [username, token] = authCode.split(' ');
 
         await tryCatch(
+            "Error during save delete",
+            res,
+            "",
             async () => {
                 const decodedToken = decryptToken(token);
 
@@ -126,9 +131,7 @@ const gameController = {
                 const values = [uId, saveId];
                 const results = await executeQuery(deleteQuery, values, "Player save successfully deleted", res, 'Saves deleted successfully')
                 return results;
-            },
-            "Error during save delete",
-            res
+            }
         )
     }
 };

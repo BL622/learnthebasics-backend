@@ -35,7 +35,7 @@ const sendMail = async (mailOptions) => {
   } catch (error) {
     const errorMessage = errors.sendingEmail();
     log(`${LOG_PREFIX}${errorMessage}: ${error.message}`, 'error');
-    throw new ErrorHandler(errorMessage, error);
+    return {error: true, message: 'Email sending is not possible'}
   }
 };
 
