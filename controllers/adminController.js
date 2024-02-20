@@ -102,7 +102,7 @@ const adminController = {
             async () => {
                 log('Delete rows');
                 const deleteQuery = `DELETE FROM ${req.body.tableName} WHERE ${Object.keys(req.body)[1]} = ?`;
-                const result = await executeQuery(deleteQuery, Object.values(req.body)[1], `Delete from ${req.body.tableName} by id: ${Object.values(req.body)[1]}`, res, "Successful update");
+                const result = await executeQuery(deleteQuery, Object.values(req.body)[2], `Delete from ${req.body.tableName} by id: ${Object.values(req.body)[1]}`, res, "Successful update");
                 return result;
             },
             "Error during delete",
