@@ -87,7 +87,6 @@ const adminController = {
             async () => {
                 log('Updating rows');
                 const updateQuery = `UPDATE ${req.body.tableName} SET ? WHERE ${Object.keys(req.body.data[0])[0]} = ?`;
-                log(req.body.data[0], 'error')
                 const result = await executeQuery(updateQuery, [req.body.data[0], Object.values(req.body.data[0])[0]], `Update ${req.body.tableName}`, res, "Successful update");
                 return result
             },
