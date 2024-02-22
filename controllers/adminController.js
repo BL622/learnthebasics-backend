@@ -13,19 +13,14 @@ const adminController = {
             async () => {
                 log('Admin checking:');
                 const decodedToken = decryptToken(token);
-
+                log(decodedToken, 'info')
                 const isAdminQuery = `SELECT isAdmin FROM userTbl WHERE uid = ?`;
                 const value = decodedToken.uid;
                 const result = await executeQuery(isAdminQuery, value, 'IsAdmin query', res, 'User validation was successful');
 
-                if (result[1].data[0].isAdmin == true && result[1].data[0].isAdmin === decodedToken.isAdmin) {
-                    result[1].data[0].isAdmin = true;
-                    return result
-                }
-                else {
-                    result[1].data[0].isAdmin = false;
-                    return result
-                }
+                result[1].data[0].isAdmin = !!result[1].data[0].isAdmin;
+                return result
+
 
             }
         )

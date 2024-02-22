@@ -87,7 +87,7 @@ const checkUserExists = async (field, value, errorMessage, res) => {
 };
 
 const handleApplicationLogin = async (username, password, res) => {
-  const user = await getUserByField("username", username, "User not found", res);
+  const user = await checkUserExists("username", username, "User not found", res);
   if (user[0] == 404) {
     return user;
   }
@@ -107,7 +107,7 @@ const handleApplicationLogin = async (username, password, res) => {
 };
 
 const handleWebsiteLogin = async (username, password, res) => {
-  const user = await getUserByField("username", username, "User not found", res);
+  const user = await checkUserExists("username", username, "User not found", res);
   if (user[0] == 404) {
     return user;
   }
