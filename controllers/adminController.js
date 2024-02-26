@@ -51,11 +51,7 @@ const adminController = {
                 const results = await executeQuery(query, '', `Query to select all rows from table ${tableName}`, res, 'Table rows select was successful');
                 if (tableName === "userTbl") {
                     results[1].data.forEach(element => {
-                        if (element.isAdmin === 1) {
-                            element.isAdmin = true;
-                        } else {
-                            element.isAdmin = false
-                        }
+                        element.isAdmin = !!element.isAdmin;
                     })
                 }
                 return results;
@@ -72,6 +68,7 @@ const adminController = {
                 log('Inserting new rows');
                 const insertQuery = `INSERT INTO ${req.body.tableName} SET ?`
                 const result = await executeQuery(insertQuery, [req.body.data[0]], `Inserting new row into ${req.body.tableName}`, res, "Successful data insertion");
+                log(result, 'info')
                 return result;
             }
         )
@@ -86,6 +83,10 @@ const adminController = {
                 log('Updating rows');
                 const updateQuery = `UPDATE ${req.body.tableName} SET ? WHERE ${Object.keys(req.body.data[0])[0]} = ?`;
                 const result = await executeQuery(updateQuery, [req.body.data[0], Object.values(req.body.data[0])[0]], `Update ${req.body.tableName}`, res, "Successful update");
+                log(result[1].data.changedRows, 'error');
+                if (result[1].data.changedRows === 0){
+                    result[0] = 304;
+                }
                 return result
             }
         )
