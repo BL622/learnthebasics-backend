@@ -73,6 +73,7 @@ const adminController = {
             async () => {
                 log('Inserting new rows');
                 const insertQuery = `INSERT INTO ${req.body.tableName} SET ?`
+                log([req.body.data[0]], 'info')
                 const result = await executeQuery(insertQuery, [req.body.data[0]], `Inserting new row into ${req.body.tableName}`, res, "Successful data insertion");
                 return result;
             },
@@ -87,6 +88,8 @@ const adminController = {
             async () => {
                 log('Updating rows');
                 const updateQuery = `UPDATE ${req.body.tableName} SET ? WHERE ${Object.keys(req.body.data[0])[0]} = ?`;
+                log([req.body.data[0]], 'info')
+                log([ Object.values(req.body.data[0])[0]], 'info')
                 const result = await executeQuery(updateQuery, [req.body.data[0], Object.values(req.body.data[0])[0]], `Update ${req.body.tableName}`, res, "Successful update");
                 return result
             },
@@ -102,6 +105,8 @@ const adminController = {
             async () => {
                 log('Delete rows');
                 const deleteQuery = `DELETE FROM ${req.body.tableName} WHERE ${Object.values(req.body)[1]} = ?`;
+                log(Object.values(req.body)[2], 'info')
+                log(Object.values(req.body)[1], 'info')
                 const result = await executeQuery(deleteQuery, Object.values(req.body)[2], `Delete from ${req.body.tableName} by id: ${Object.values(req.body)[1]}`, res, "Successful update");
                 return result;
             },
