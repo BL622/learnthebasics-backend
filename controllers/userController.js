@@ -1,5 +1,7 @@
 const bcrypt = require("bcrypt");
-const { body, validationResult } = require('express-validator');
+const { validationResult } = require('express-validator');
+
+
 const {
   executeQuery,
   tryCatch,
@@ -11,41 +13,9 @@ const {
 } = require('../sharedFunctions/functions');
 const emailController = require("./emailController");
 const { createToken, decryptToken } = require("./tokenGeneration");
+const {registerPlayerSchema, loginSchema, forgotPasswordSchema, resetPasswordSchema} = require('../sharedFunctions/validationSchemas');
 
-const usernameRegex = /^[a-zA-Z][a-zA-Z0-9_.-]{4,24}$/;
-const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@.#$!%?&^])[A-Za-z\d@.#$!%?&]{7,23}$/;
 
-// Define schemas for each request type
-const registerPlayerSchema = [
-  body('email').isEmail().withMessage('Invalid email address'),
-  body('username').matches(usernameRegex).withMessage('Invalid username'),
-  body('password').matches(passwordRegex).withMessage('Invalid password'),
-  body('confirmPassword').custom((value, { req }) => {
-    if (value !== req.body.password) {
-      throw new Error('Password and Confirm Password do not match');
-    }
-    return true;
-  })
-];
-
-const loginSchema = [
-  body('username').matches(usernameRegex).withMessage('Invalid username'),
-  body('password').matches(passwordRegex).withMessage('Invalid password')
-];
-
-const forgotPasswordSchema = [
-  body('email').isEmail().withMessage('Invalid email address')
-];
-
-const resetPasswordSchema = [
-  body('password').matches(passwordRegex).withMessage('Invalid new password'),
-  body('confirmPassword').custom((value, { req }) => {
-    if (value !== req.body.password) {
-      throw new Error('Password and Confirm Password do not match');
-    }
-    return true;
-  })
-];
 
 const playerController = {
   registerPlayer: [
@@ -54,14 +24,13 @@ const playerController = {
       const { email, username, password } = req.body;
       log("Registering player:");
 
-
-
-
       await tryCatch(
         "Error during player registration",
         res,
         "",
+
         async () => {
+
           const errors = validationResult(req);
           if (!errors.isEmpty()) {
             log(`Error during player registration: ${errors.array()[0].msg}`, 'error');
@@ -88,6 +57,7 @@ const playerController = {
 
           log("Player registered successfully", 'success');
           return result;
+
         }
       );
     }
