@@ -74,7 +74,7 @@ const gameController = {
                             }
                         }
                         break;
-                    case update:
+                    case "update":
                         for (const save of savesData) {
                             const saveId = save.saveId;
                             const existingSave = await checkExistingSave(uId, saveId, res);
@@ -90,7 +90,7 @@ const gameController = {
                             }
                         };
                         break;
-                    case override:
+                    case "override":
                         const overrideQuery = `UPDATE savedata SET lvl=0,money=0,time=0,cpuId=0,gpuId=0,ramId=0,stgId=0,lastBought='{\"cpu\":0,\"gpu\":0,\"ram\":0,\"stg\":0}' WHERE userId = ? AND saveId = ?`;
                         const overrideValues = [savesData.saveId, uId];
                         await executeQuery(overrideQuery, overrideValues, 'Overriding existing savefile', res, 'Successful override');
