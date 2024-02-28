@@ -143,8 +143,8 @@ const updateSave = async (uId, save, res) => {
   `;
 
   const updateValues = [
-    save.lvl, save.time, save.money, save.cpuId, save.gpuId, save.ramId, save.stgId, save.lastBought,
-    uId, save.saveId
+    save.lvl, save.time, save.money, save.cpu, save.gpu, save.ram, save.stg, save.lb,
+    uId, save.id
   ];
 
   await executeQuery(updateQuery, updateValues, `Query to update save`, res, "Save updated successfully");
