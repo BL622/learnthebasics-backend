@@ -94,7 +94,7 @@ const gameController = {
         switch (appType) {
           case null:
             for (const save of savesData) {
-              const saveId = save.saveId;
+              const saveId = save.id;
               const existingSave = await checkExistingSave(uId, saveId, res);
 
               if (existingSave) {
