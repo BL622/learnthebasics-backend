@@ -120,6 +120,7 @@ const gameController = {
 
               if (existingSave) {
                 // Update existing save
+                log(save);
                 await updateSave(uId, save, res);
                 log(`Save with ID ${saveId} updated successfully`, "success");
               } else {
