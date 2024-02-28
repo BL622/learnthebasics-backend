@@ -1,8 +1,9 @@
-const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const dotenv = require('dotenv');
+dotenv.config()
 
-const secretKey = Buffer.from('My6VoJly9V2d9qJpIkZgD5V7cHokeCdr', 'utf-8');
+//My6VoJly9V2d9qJpIkZgD5V7cHokeCdr
+const secretKey = Buffer.from(process.env.SECRET_BUFFER, 'utf-8');
 
 const createToken = (userData, expirationTimeInMinutes = null) => {
 
@@ -55,7 +56,6 @@ const decryptToken = (token) => {
 
   let decryptedToken = decipher.update(receivedCiphertext, 'hex', 'utf-8');
   decryptedToken += decipher.final('utf-8');
-
   const tokenData = JSON.parse(decryptedToken);
 
   return tokenData;

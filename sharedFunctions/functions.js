@@ -52,7 +52,7 @@ function formatObject(obj) {
 }
 
 
-async function tryCatch(callback, errorMessage, res, successMessage = "Operation successful") {
+async function tryCatch(errorMessage, res, successMessage = "Operation successful", callback) {
   try {
     const result = await callback();
     log(successMessage, "success");
@@ -76,66 +76,18 @@ async function executeQuery(query, values, logMessage, res, successMessage) {
   }
 }
 
-const validateInputs = (inputs, validations) => {
-  const keys = Object.keys(inputs);
-
-  // Check if all required fields are present
-  for (const validation of validations) {
-    const { field, required } = validation;
-    if (required && !keys.includes(field)) {
-      return `Required field "${field}" is missing in the request body`;
-    }
-  }
-
-  // Check for unexpected keys
-  for (const key of keys) {
-    const isUnexpected = !validations.some(validation => validation.field === key);
-    if (isUnexpected) {
-      return `Unexpected field "${key}" in the request body`;
-    }
-  }
-
-  const password = inputs['password'];
-  const confirmPassword = inputs['confirmPassword'];
-  if (password !== confirmPassword) {
-    return 'Password and Confirm Password do not match';
-  }
-
-  // Validate inputs based on regex
-  for (const validation of validations) {
-    const { field, regex, errorMessage } = validation;
-    if (regex && !regex.test(inputs[field])) {
-      return errorMessage;
-    }
-  }
-
-  return null;
-};
-
-
-const checkExistingUser = async (field, value, errorMessage, res) => {
-  const result = await executeQuery(`SELECT * FROM userTbl WHERE ${field} = ?`, [value], `Query to check existing ${field}`, res, "");
-  log(`Query results for registration ${field} check:\n${JSON.stringify(result[1].data)}`, "info");
-
-  if (result[1].data.length > 0) {
-    return [400, { error: errorMessage }];
-  }
-
-  return null;
-};
-
-const getUserByField = async (field, value, errorMessage, res) => {
-  const result = await executeQuery(`SELECT * FROM userTbl WHERE ${field} = ?`, [value], `Query to check ${field} for password reset`, res, "");
+const checkUserExists = async (field, value, errorMessage, res) => {
+  const result = await executeQuery(`SELECT * FROM userTbl WHERE ${field} = ?`, [value], `Query to check ${field}`, res, "");
   log(`Query results for ${field} check:\n${JSON.stringify(result[1].data)}`, "info");
-  if (result[1].data.length == 0) {
-    return [404, { error: `${field} not found` }];
+  if (result[1].data.length === 0) {
+    return [404, { error: errorMessage }];
   }
 
   return result[1].data[0];
 };
 
 const handleApplicationLogin = async (username, password, res) => {
-  const user = await getUserByField("username", username, "User not found", res);
+  const user = await checkUserExists("username", username, "User not found", res);
   if (user[0] == 404) {
     return user;
   }
@@ -155,7 +107,7 @@ const handleApplicationLogin = async (username, password, res) => {
 };
 
 const handleWebsiteLogin = async (username, password, res) => {
-  const user = await getUserByField("username", username, "User not found", res);
+  const user = await checkUserExists("username", username, "User not found", res);
   if (user[0] == 404) {
     return user;
   }
@@ -222,12 +174,11 @@ const createSaveIfNotExists = async (uId, save, res) => {
 }
 
 module.exports = {
+  ErrorHandler,
   tryCatch,
   executeQuery,
   log,
-  validateInputs,
-  checkExistingUser,
-  getUserByField,
+  checkUserExists,
   handleApplicationLogin,
   handleWebsiteLogin,
   updateUserField,
