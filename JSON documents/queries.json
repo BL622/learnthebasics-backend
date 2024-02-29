@@ -1,0 +1,4 @@
+{
+    "selectUserByUsername": "SELECT * FROM userTbl WHERE username = ?",
+    "selectUserByEmail": "SELECT * FROM userTbl WHERE email = ?"
+}

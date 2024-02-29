@@ -1,6 +1,6 @@
 const fs = require('fs').promises;
 const path = require('path');
-const { log, ErrorHandler } = require('../sharedFunctions/functions');
+const {log} = require('../sharedFunctions/logFunction')
 const transporter = require('../config/emailConfig');
 
 const LOG_PREFIX = 'Email Service: ';
@@ -20,7 +20,7 @@ const readHtmlTemplate = async templatePath => {
   try {
     return await fs.readFile(templatePath, 'utf-8');
   } catch (error) {
-    throw new ErrorHandler(errors.readingTemplate(templatePath), error);
+    throw new Error(errors.readingTemplate(templatePath), error);
   }
 };
 

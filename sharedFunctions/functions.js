@@ -2,42 +2,6 @@ const db = require("../config/db");
 const { createToken } = require('../controllers/tokenGeneration');
 const bcrypt = require('bcrypt');
 
-
-// function log(message, type) {
-//   const colors = {
-//     info: "\x1b[34m", // Blue
-//     success: "\x1b[32m", // Green
-//     error: "\x1b[31m", // Red
-//   };
-
-//   const resetColor = "\x1b[0m";
-//   const color = colors[type] || resetColor; // Default to white
-
-//   const formattedTimestamp = `[${new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '')}] - `;
-//   const coloredMessage = `${color}${formattedTimestamp}${formatMessage(message)}${resetColor}`;
-
-//   console.log(coloredMessage);
-// }
-
-// function formatMessage(message) {
-//   if (Array.isArray(message)) {
-//     return formatArray(message);
-//   } else if (typeof message === 'object' && message !== null) {
-//     return formatObject(message);
-//   } else {
-//     return message;
-//   }
-// }
-
-// function formatArray(arr) {
-//   return `[${arr.map(formatMessage).join(', ')}]`;
-// }
-
-// function formatObject(obj) {
-//   const entries = Object.entries(obj).map(([key, value]) => `${key}: ${formatMessage(value)}`);
-//   return `{ ${entries.join(', ')} }`;
-// }
-
 // async function executeQuery(query, values, logMessage, res, successMessage) {
 //   const connection = await db.pool.getConnection();
 //   try {
@@ -54,24 +18,24 @@ async function executeQuery(query, values) {
   const connection = await db.pool.getConnection();
   try {
     const [queryRes] = await connection.query(query, values);
-    return  queryRes;
+    return queryRes;
   } finally {
     connection.release();
   }
 }
 
-async function generateHash(password){
+async function generateHash(password) {
   const hashedPassword = await bcrypt.hash(password, 10);
   return hashedPassword
 }
 
-async function compareHash(password, hashedPassword){
+async function compareHash(password, hashedPassword) {
   const passwordMatch = await bcrypt.compare(password, hashedPassword);
   return passwordMatch
 }
 
 
-module.exports = {executeQuery, generateHash, compareHash};
+module.exports = { executeQuery, generateHash, compareHash };
 
 
 

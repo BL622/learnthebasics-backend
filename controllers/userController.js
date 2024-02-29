@@ -142,6 +142,14 @@
 //             return user;
 //           }
 
+
+
+
+
+
+
+
+
 //           const userToken = user.passwordResetToken;
 //           if (userToken) {
 //             try {
@@ -268,36 +276,56 @@ const { validationResult } = require("express-validator");
 
 const Apiresponse = require("../sharedFunctions/response");
 const { executeQuery, generateHash, compareHash } = require("../sharedFunctions/functions");
-const {createToken} = require('./tokenGeneration');
+const { createToken, decryptToken } = require('./tokenGeneration');
+const emailController = require("./emailController");
 
+const queries = require('../JSON documents/queries.json')
 
 async function checkUserExists(username, email) {
   let query;
 
-  query = "SELECT * FROM userTbl WHERE username = ?";
+  query = queries.selectUserByUsername;
   const usernameRes = await executeQuery(query, username);
 
-  query = "SELECT * FROM userTbl WHERE email = ?";
+  query = queries.selectUserByEmail;
   const emailRes = await executeQuery(query, email);
-
   if (usernameRes.length !== 0 || emailRes.length !== 0) return true;
   return false;
 }
 
-async function handleLoginType(username, password, appType = ""){
+async function handleLoginType(username, password, appType = "") {
 
   const user = await checkUserExists(username, "")
 
-  if(!user) return 404
+  if (!user) return 404
 
-  let query = "SELECT * FROM userTbl WHERE username = ?";
+  let query = queries.selectUserByUsername;
   let selectRes = await executeQuery(query, username);
   const matchPassword = await compareHash(password, selectRes[0].password);
 
-  if(!matchPassword) return false;
-  
-  return selectRes[0];
+  if (!matchPassword) return false;
 
+  return selectRes[0];
+}
+
+async function checkAndUpdateResetToken(user, email) {
+  const userToken = user.passwordResetToken;
+
+  if (userToken) {
+    try {
+      const decoded = decryptToken(userToken);
+      if (decoded.expires_at > Math.floor(Date.now() / 1000)) return 400;
+
+    } catch (decodeError) {
+      console.log("Existing token verification failed or expired", "error");
+    }
+  }
+
+  const resetToken = createToken(user, 60);
+  const query = "UPDATE userTbl SET passwordResetToken = ? WHERE email = ?";
+  await executeQuery(query, [resetToken, email]);
+
+  return resetToken;
 }
 
 async function registerPlayer(req, res) {
@@ -305,18 +333,18 @@ async function registerPlayer(req, res) {
 
   console.log("Registering player:");
   const errors = validationResult(req);
-  if (!errors.isEmpty()) return Apiresponse.send(res, 403, { error: errors.array()[0].msg });
+  if (!errors.isEmpty()) return Apiresponse.badRequest(res, errors.array()[0].msg);
 
   console.log("Check user existence");
   const user = await checkUserExists(request.username, request.email);
-  if (user) return Apiresponse.send(res, 400, {error: "Email or username already in use!",});
+  if (user) return Apiresponse.badRequest(res, "Email or username already in use!");
 
   const insertUser = "INSERT INTO userTbl (email, username, password) VALUES (?,?,?)";
   delete request["confirmPassword"];
   request.password = await generateHash(request.password);
   const insertRes = await executeQuery(insertUser, Object.values(request));
 
-  return Apiresponse.send(res, 200, {message: "User registered successfully", data: insertRes});
+  return Apiresponse.ok(res, { message: "User registered successfully", data: insertRes });
 }
 
 async function loginPlayer(req, res) {
@@ -324,24 +352,35 @@ async function loginPlayer(req, res) {
 
   console.log("Logging in user:");
   const errors = validationResult(req);
-  if (!errors.isEmpty()) return Apiresponse.send(res, 400, { error: errors.array()[0].msg });
+  if (!errors.isEmpty()) return Apiresponse.badRequest(res, errors.array()[0].msg);
 
   const user = await handleLoginType(request.username, request.password, req.headers["x-app-type"]);
-  if(user === 404) return Apiresponse.send(res, 404, {error: "User not found"});
-  if(!user) return Apiresponse.send(res, 401, { error: "Invalid password" });
+  if (user === 404) return Apiresponse.notFound(res, "User not found");
+  if (!user) return Apiresponse.unauthorized(res, "Invalid password");
 
 
-  return Apiresponse.send(res, 200, { data: [user.username, createToken(user)]})
+  return Apiresponse.ok(res, { data: [user.username, createToken(user)] })
 }
 
-async function forgotPassword(req, res){
+async function forgotPassword(req, res) {
   const request = req.body;
 
   console.log("Initiating password reset:");
   const errors = validationResult(req);
-  if (!errors.isEmpty()) return [400, { error: errors.array()[0].msg }];
+  if (!errors.isEmpty()) return Apiresponse.badRequest(res, errors.array()[0].msg);
 
-  
+  let user = await checkUserExists("", request.email);
+  if (!user) return Apiresponse.notFound(res, "User not found");
+
+  let query = queries.selectUserByEmail;
+  user = await executeQuery(query, request.email);
+
+  const resetToken = await checkAndUpdateResetToken(user[0], request.email);
+  if (resetToken === 400) return Apiresponse.badRequest(res, "Password reset email has already been sent");
+
+  const emailResult = await emailController.sendPasswordResetEmail(request.email, resetToken, user[0].username);
+  if (emailResult.error) return Apiresponse.internalServerError(res, "Error sending password reset email.");
+  return Apiresponse.ok(res, { message: "Password reset email sent successfully" });
 }
 
-module.exports = { registerPlayer, loginPlayer };
+module.exports = { registerPlayer, loginPlayer, forgotPassword };
