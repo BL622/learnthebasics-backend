@@ -117,7 +117,7 @@ const gameController = {
             for (const save of savesData) {
               const saveId = save.saveId;
               const existingSave = await checkExistingSave(uId, saveId, res);
-
+              log(existingSave, 'info')
               if (existingSave) {
                 // Update existing save
                 log(save);
