@@ -2,11 +2,6 @@ const db = require("../config/db");
 const { createToken } = require('../controllers/tokenGeneration');
 const bcrypt = require('bcrypt');
 
-class ApiResponse {
-  static send(res, statusCode, data) {
-    return res.status(statusCode).json(data);
-  }
-}
 
 // function log(message, type) {
 //   const colors = {
@@ -43,12 +38,23 @@ class ApiResponse {
 //   return `{ ${entries.join(', ')} }`;
 // }
 
+// async function executeQuery(query, values, logMessage, res, successMessage) {
+//   const connection = await db.pool.getConnection();
+//   try {
+//     const [results] = await connection.query(query, values);
+//     log(logMessage + "\n" + `Database query successful: ${query}`, "success");
+//     return [200, { message: successMessage, data: results }];
+//   } finally {
+//     connection.release();
+//   }
+// }
+
 
 async function executeQuery(query, values) {
   const connection = await db.pool.getConnection();
   try {
-    const [results] = await connection.query(query, values);
-    return  results;
+    const [queryRes] = await connection.query(query, values);
+    return  queryRes;
   } finally {
     connection.release();
   }
@@ -65,8 +71,7 @@ async function compareHash(password, hashedPassword){
 }
 
 
-module.exports = {executeQuery, generateHash, compareHash}
-
+module.exports = {executeQuery, generateHash, compareHash};
 
 
 
@@ -192,5 +197,3 @@ module.exports = {executeQuery, generateHash, compareHash}
 //   createSave,
 //   createSaveIfNotExists
 // };
-
-module.exports = ApiResponse

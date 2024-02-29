@@ -264,32 +264,74 @@
 //   playerController,
 // };
 
-
-
-
 const { validationResult } = require("express-validator");
 
-const Apiresponse = require('../sharedFunctions/functions');
-const {executeQuery} = require('../sharedFunctions/functions');
+const Apiresponse = require("../sharedFunctions/response");
+const { executeQuery, generateHash, compareHash } = require("../sharedFunctions/functions");
+const {createToken} = require('./tokenGeneration');
 
-async function checkUserExists(username, email){
+
+async function checkUserExists(username, email) {
   let query;
-  let response;
 
-  query = 'SELECT * FROM userTbl WHERE username = ?';
-  response = await executeQuery(query, username);
+  query = "SELECT * FROM userTbl WHERE username = ?";
+  const usernameRes = await executeQuery(query, username);
+
+  query = "SELECT * FROM userTbl WHERE email = ?";
+  const emailRes = await executeQuery(query, email);
+
+  if (usernameRes.length !== 0 || emailRes.length !== 0) return true;
+  return false;
+}
+
+async function handleLoginType(username, password, appType = ""){
+
+  const user = await checkUserExists(username, "")
+
+  if(!user) return 404
+
+  let query = "SELECT * FROM userTbl WHERE username = ?";
+  let selectRes = await executeQuery(query, username);
+  const matchPassword = await compareHash(password, selectRes[0].password);
+
+  if(!matchPassword) return false;
+  
+  return selectRes[0];
 
 }
 
 async function registerPlayer(req, res) {
+  const request = req.body;
 
   console.log("Registering player:");
   const errors = validationResult(req);
   if (!errors.isEmpty()) return Apiresponse.send(res, 403, { error: errors.array()[0].msg });
 
   console.log("Check user existence");
-  checkUserExists();
-  
+  const user = await checkUserExists(request.username, request.email);
+  if (user) return Apiresponse.send(res, 400, {error: "Email or username already in use!",});
+
+  const insertUser = "INSERT INTO userTbl (email, username, password) VALUES (?,?,?)";
+  delete request["confirmPassword"];
+  request.password = await generateHash(request.password);
+  const insertRes = await executeQuery(insertUser, Object.values(request));
+
+  return Apiresponse.send(res, 200, {message: "User registered successfully", data: insertRes});
 }
 
-module.exports = {registerPlayer}
+async function loginPlayer(req, res) {
+  const request = req.body;
+
+  console.log("Logging in user:");
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) return Apiresponse.send(res, 400, { error: errors.array()[0].msg });
+
+  const user = await handleLoginType(request.username, request.password, req.headers["x-app-type"]);
+  if(user === 404) return Apiresponse.send(res, 404, {error: "User not found"});
+  if(!user) return Apiresponse.send(res, 401, { error: "Invalid password" });
+
+
+  return Apiresponse.send(res, 200, { data: [user.username, createToken(user)]})
+}
+
+module.exports = { registerPlayer, loginPlayer };
