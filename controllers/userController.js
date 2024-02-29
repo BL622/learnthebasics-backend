@@ -334,4 +334,14 @@ async function loginPlayer(req, res) {
   return Apiresponse.send(res, 200, { data: [user.username, createToken(user)]})
 }
 
+async function forgotPassword(req, res){
+  const request = req.body;
+
+  console.log("Initiating password reset:");
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) return [400, { error: errors.array()[0].msg }];
+
+  
+}
+
 module.exports = { registerPlayer, loginPlayer };
