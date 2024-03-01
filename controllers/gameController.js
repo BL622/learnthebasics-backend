@@ -104,7 +104,7 @@ const gameController = {
                 return [
                   450,
                   {
-                    message: `Would you like to override your  existing save with this name?`,
+                    error: `Would you like to override your  existing save with this name?`,
                   },
                 ];
               } else {
@@ -201,8 +201,6 @@ const gameController = {
     const ram = await executeQuery(sql, [], "", res, "").then(hw => hw[1].data);
     sql = "SELECT * FROM `stgTbl` ORDER BY hardwareId;";
     const stg = await executeQuery(sql, [], "", res, "").then(hw => hw[1].data);
-
-    log({cpu, gpu, ram, stg}, "info");
 
     res.status(200).json({cpu, gpu, ram, stg});
   }
