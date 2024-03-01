@@ -92,7 +92,8 @@ const gameController = {
 
         const appType = req.headers["x-save-type"];
         switch (appType) {
-          case null:
+          case undefined:
+            log("test", "info");
             for (const save of savesData) {
               const saveId = save.saveId;
               const existingSave = await checkExistingSave(uId, saveId, res);
@@ -132,7 +133,7 @@ const gameController = {
             break;
           case "override":
             const overrideQuery = `UPDATE savedata SET lvl=0,money=0,time=0,cpuId=0,gpuId=0,ramId=0,stgId=0,lastBought='{\"cpu\":0,\"gpu\":0,\"ram\":0,\"stg\":0}' WHERE userId = ? AND saveId = ?`;
-            const overrideValues = [savesData.saveId, uId];
+            const overrideValues = [uId, savesData[0].saveId];
             await executeQuery(
               overrideQuery,
               overrideValues,
@@ -140,7 +141,7 @@ const gameController = {
               res,
               "Successful override"
             );
-            log(`Save with ID ${saveId} updated successfully`, "success");
+            log(`Save with ID ${savesData[0].saveId} updated successfully`, "success");
             break;
           default:
             break;
@@ -191,6 +192,20 @@ const gameController = {
       res
     );
   },
+  getHardwareelements: async function (req, res) {
+    let sql = "SELECT * FROM `cpuTbl` ORDER BY hardwareId;";
+    const cpu = await executeQuery(sql, [], "", res, "").then(hw => hw[1].data);
+    sql = "SELECT * FROM `gpuTbl` ORDER BY hardwareId;";
+    const gpu = await executeQuery(sql, [], "", res, "").then(hw => hw[1].data);
+    sql = "SELECT * FROM `ramTbl` ORDER BY hardwareId;";
+    const ram = await executeQuery(sql, [], "", res, "").then(hw => hw[1].data);
+    sql = "SELECT * FROM `stgTbl` ORDER BY hardwareId;";
+    const stg = await executeQuery(sql, [], "", res, "").then(hw => hw[1].data);
+
+    log({cpu, gpu, ram, stg}, "info");
+
+    res.status(200).json({cpu, gpu, ram, stg});
+  }
 };
 
 module.exports = { gameController };
