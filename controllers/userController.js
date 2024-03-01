@@ -279,12 +279,11 @@ const { executeQuery, generateHash, compareHash } = require("../sharedFunctions/
 const { createToken, decryptToken } = require('./tokenGeneration');
 const emailController = require("./emailController");
 
-const queries = require('../JSON documents/queries.json')
+const queries = require('../JSON documents/queries.json');
+const { get } = require("../routes/userRoutes");
 
 async function checkUserExists(username, email) {
-  let query;
-
-  query = queries.selectUserByUsername;
+  let query = queries.selectUserByUsername;
   const usernameRes = await executeQuery(query, username);
 
   query = queries.selectUserByEmail;
@@ -383,4 +382,30 @@ async function forgotPassword(req, res) {
   return Apiresponse.ok(res, { message: "Password reset email sent successfully" });
 }
 
-module.exports = { registerPlayer, loginPlayer, forgotPassword };
+async function resetPassword(req, res) {
+  const request = req.body;
+
+  console.log("Resetting password:");
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) return Apiresponse.badRequest(res, errors.array()[0].msg);
+
+  const decodedToken = decryptToken(request.resetToken);
+  if (!!decodedToken.error) return Apiresponse.badRequest(res, decodedToken.error);
+
+  const user = await checkUserExists(decodedToken.username, "");
+  if (!user) return Apiresponse.notFound(res, "User not found wrong token used!");
+
+  let query = "SELECT * FROM userTbl WHERE passwordResetToken = ?";
+  const getUserByResetToken = await executeQuery(query, request.resetToken);
+  if (getUserByResetToken.length === 0) return Apiresponse.badRequest(res, "User not found wrong token used!");
+
+  const hashedPassword = await generateHash(request.password);
+  query = "UPDATE userTbl SET password = ?, passwordResetToken = NULL WHERE uid = ?`";
+  await executeQuery(hashedPassword, [hashedPassword, decodedToken.uid]);
+
+  const emailResult = await emailController.passwordResetSuccessful(decodedToken.email, decodedToken.username);
+  if (emailResult.error) return Apiresponse.internalServerError(res, "Error sending the password changed email");
+  return Apiresponse.ok(res, { message: "Password reset was successful and password changed email sent successfully" });
+}
+
+module.exports = { registerPlayer, loginPlayer, forgotPassword, resetPassword };

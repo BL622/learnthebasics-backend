@@ -47,7 +47,8 @@ const decryptToken = (token) => {
   const calculatedSignature = hmac.update(receivedCiphertextWithTag).digest('hex');
 
   if (calculatedSignature !== receivedSignature) {
-    throw new Error('Token is invalid: Signature mismatch');
+    new Error('Token is invalid: Signature mismatch');
+    return {error: "Token is invalid! Signature mismatch"}
   }
 
   // Decryption
