@@ -199,54 +199,48 @@ const playerController = {
       );
     }
   ],
+  validateResetToken: async function (req, res) {
+    await tryCatch(
+      async () => {
+        const token = decryptToken(req.body.token);
+        const resetTokenQuery = `SELECT passwordResetToken FROM userTbl WHERE username = ?`;
+        const results = await executeQuery(
+          resetTokenQuery,
+          [token.username],
+          "Checking reset token",
+          res,
+          "Reset token found"
+        );
+        if (results[1].data[0].passwordResetToken === null) return [404, { error: "Reset token not found" }];
+        if (results[1].data[0].passwordResetToken !== req.body.token) return [400, { error: "Invalid reset token" }];
+        if (token.expires_at < Date.now() / 1000) {
+          const removeTokenQuery = `UPDATE userTbl SET passwordResetToken = NULL WHERE passwordResetToken = ?`;
+          await executeQuery(removeTokenQuery, [req.body.token], "Removing reset token", res, "Reset token removed");
+          return [400, { error: "Reset token expired" }];
+        }
 
-  resetPassword: [
-    resetPasswordSchema,
-    async function (req, res) {
-      const { resetToken, password } = req.body;
-      log("Resetting password:");
-
-
-
-      await tryCatch(
-        async () => {
-          const errors = validationResult(req);
-          if (!errors.isEmpty()) {
-            log(`Error resetting password: ${errors.array()[0].msg}`, 'error');
-            return [400, { error: errors.array()[0].msg }];
-          }
-          // Check if reset token is valid
-          const user = await getUserByField("passwordResetToken", resetToken, "Invalid reset token", res);
-          if (user[0] == 404) {
-            log("Invalid reset token", 'error');
-            return user;
-          }
-
-          // Hash new password
-          const hashedPassword = await bcrypt.hash(password, 10);
-
-          // Update user's password
-          await updateUserField("password", hashedPassword, "uid", decryptToken(resetToken).uid, "Password reset successful", res);
-
-          // Set reset token to null
-          await updateUserField("passwordResetToken", null, "uid", decryptToken(resetToken).uid, "Reset token set to null", res);
-
-          // Send password changed email
-          const emailResult = await emailController.passwordResetSuccessful(decryptToken(resetToken).email, decryptToken(resetToken).username);
-
-          if (emailResult.success) {
-            log("Password reset was successful and password changed email sent successfully", 'success');
-            return [200, { message: "Password reset was successful and password changed email sent successfully" }];
-          } else {
-            log("Error sending the password changed email", 'error');
-            return [500, { error: "Error sending the password changed email" }];
-          }
-        },
-        "Error during password reset",
-        res
-      );
-    }
-  ],
+        return results;
+      },
+      "Error validating token",
+      res
+    );
+  },
+  resetPassword: async function (req, res) {
+    const username = decryptToken(req.body.token).username;
+    await tryCatch(
+      async () => {
+        log(decryptToken(req.body.token));
+        if (!passwordRegex.test(req.body.password)) return [401, { error: "Password doesn't match requirements" }];
+        if (req.body.password !== req.body.confirmPassword) return [401, { error: "Passwords do not match" }];
+        const hashedPassword = await bcrypt.hash(req.body.password, 10);
+        const resetPasswordQuery = `UPDATE userTbl SET password = ?, passwordResetToken = NULL WHERE username = ?`;
+        await executeQuery(resetPasswordQuery, [hashedPassword, username], "Resetting password", res, "Password reset");
+        return [200, { message: "Password reset successful" }];
+      },
+      "Error resetting password",
+      res
+    )
+  }
 };
 
 module.exports = {
