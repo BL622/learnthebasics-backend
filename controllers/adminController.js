@@ -1,5 +1,6 @@
 const { executeQuery, tryCatch, log, checkExistingSave, updateSave, createSave } = require('../sharedFunctions/functions');
 const { decryptToken } = require('./tokenGeneration');
+const { hash } = require('bcrypt');
 
 
 const adminController = {
@@ -73,8 +74,10 @@ const adminController = {
             async () => {
                 log('Inserting new rows');
                 const insertQuery = `INSERT INTO ${req.body.tableName} SET ?`
-                log([req.body.data[0]], 'info')
-                const result = await executeQuery(insertQuery, [req.body.data[0]], `Inserting new row into ${req.body.tableName}`, res, "Successful data insertion");
+                let insertValues = req.body.data[0];
+                if (req.body.tableName === "userTbl") insertValues = { ...insertValues, password: await hash(insertValues.password, 10) };
+                log(insertValues, 'info')
+                const result = await executeQuery(insertQuery, [insertValues], `Inserting new row into ${req.body.tableName}`, res, "Successful data insertion");
                 return result;
             },
             "Error during data insertion",

@@ -225,10 +225,18 @@ const playerController = {
       res
     );
   },
-  resetPassword: async function (req, res) {
+  resetPassword:
+  [
+    resetPasswordSchema,
+    async function (req, res) {
     const username = decryptToken(req.body.token).username;
     await tryCatch(
       async () => {
+        const errors = validationResult(req);
+          if (!errors.isEmpty()) {
+            log(`Error initiating password reset: ${errors.array()[0].msg}`, 'error');
+            return [400, { error: errors.array()[0].msg }];
+          }
         log(decryptToken(req.body.token));
         if (!passwordRegex.test(req.body.password)) return [401, { error: "Password doesn't match requirements" }];
         if (req.body.password !== req.body.confirmPassword) return [401, { error: "Passwords do not match" }];
@@ -241,6 +249,7 @@ const playerController = {
       res
     )
   }
+  ],
 };
 
 module.exports = {
