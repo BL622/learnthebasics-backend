@@ -8,7 +8,7 @@ const LOG_PREFIX = 'Email Service: ';
 const defaultEmailConfig = {
   sender: 'noreply@learnthebasics.com',
   stylesDir: path.join(__dirname, '..', 'emailStyles'),
-  passwordResetUrl: 'http://localhost:3000/password-reset/',
+  passwordResetUrl: 'https://bgs.jedlik.eu/learnthebasics/password-reset/',
 };
 
 const errors = {
