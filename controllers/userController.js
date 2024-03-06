@@ -202,6 +202,7 @@ const playerController = {
   validateResetToken: async function (req, res) {
     await tryCatch(
       async () => {
+        if (req.body.token.length < 32) return [500, { error: "Token not long enough"}]
         const token = decryptToken(req.body.token);
         const resetTokenQuery = `SELECT passwordResetToken FROM userTbl WHERE username = ?`;
         const results = await executeQuery(
