@@ -26,5 +26,17 @@ class ApiResponse {
   static overrideRequest(res, message){
     return this.send(res, 450, {error: message, success: false});
   }
+
+  static duplicate(res, message = 'Duplicate entry'){
+    return this.send(res, 409, {error: message, success: false});
+  }
+
+  static created(res, data = {}){
+    return this.send(res, 201, data);
+  }
+
+  static notModified(res, message = "Not modified"){
+    return this.send(res, 304, {error: message, success: false});
+  }
 }
 module.exports = ApiResponse

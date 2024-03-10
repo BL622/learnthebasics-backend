@@ -19,6 +19,8 @@ async function executeQuery(query, values) {
   try {
     const [queryRes] = await connection.query(query, values);
     return queryRes;
+  } catch (error) {
+    return error;
   } finally {
     connection.release();
   }

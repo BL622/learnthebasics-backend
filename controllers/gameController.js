@@ -145,9 +145,6 @@ const Apiresponse = require("../sharedFunctions/response");
 const { executeQuery } = require('../sharedFunctions/functions');
 const { decryptToken } = require('./tokenGeneration');
 
-const mysql = require('mysql2');
-const ApiResponse = require("../sharedFunctions/response");
-
 async function updateSave(uId, values, saveId) {
     const query = "UPDATE savedata SET ? WHERE saveId = ? AND userId = ?";
     for (const save of values) {
@@ -190,54 +187,6 @@ async function determineActionByHeader(appType, data, uId) {
     return true;
 }
 
-async function getSaves(req, res) {
-    const [username, token] = req.body.authCode.split(" ");
-
-    console.log("Get player saves:");
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) return Apiresponse.badRequest(res, errors.array()[0].msg);
-
-    const decodedToken = decryptToken(token);
-    if (decodedToken.username !== username) return Apiresponse.badRequest(res, "Username in the token does not match the provided username");
-
-    const query = "SELECT saveId, lvl, time, money, cpuId, gpuId, ramId, stgId, lastBought FROM savedata WHERE userId = ? ORDER BY lastModified DESC";
-    const saveRes = await executeQuery(query, decodedToken.uid);
-
-    if (saveRes.length === 0) return Apiresponse.notFound(res, "User doesn't have saves!");
-    return Apiresponse.ok(res, { message: "Saves retrieved successfully", data: saveRes })
-}
-
-async function setSavesOrUpdate(req, res) {
-    const [username, token] = req.body.authCode.split(" ");
-    const requestBody = req.body;
-
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) return Apiresponse.badRequest(res, errors.array()[0].msg);
-
-    const decodedToken = decryptToken(token);
-    if (decodedToken.username !== username) return Apiresponse.badRequest(res, "Username in the token does not match the provided username");
-
-    const determinedAction = await determineActionByHeader(req.headers["x-save-type"], requestBody.data, decodedToken.uid);
-    if (!!determinedAction.error) return Apiresponse.overrideRequest(res, determinedAction.error);
-
-    return Apiresponse.ok(res, { message: "Saves updated or created successfully" })
-}
-
-async function deleteSave(req, res){
-    const request = req.body;
-    const [username, token] = request.authCode.split(" ");
-
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) return Apiresponse.badRequest(res, errors.array()[0].msg);
-
-    const decodedToken = decryptToken(token);
-    if(decodedToken.username !== username) return ApiResponse.badRequest(res, "Username in the token does not match the provided username");
-
-    const query = "DELETE FROM savedata WHERE userId = ? AND saveId = ?";
-    const deleteRes = await executeQuery(query, [decodedToken.uid, request.saveId]);
-    return Apiresponse.ok(res, {successMessage: "Saves deleted successfully", data: deleteRes});
-}
-
 async function getHardwareElements(req, res){
     const [cpu, gpu, ram, stg] = await Promise.all([
         executeQuery("SELECT * FROM `cpuTbl` ORDER BY hardwareId;"),
@@ -250,5 +199,55 @@ async function getHardwareElements(req, res){
     Apiresponse.ok(res, { cpu, gpu, ram, stg });
 }
 
+async function getSaves(req, res) {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) return Apiresponse.badRequest(res, errors.array()[0].msg);
 
-module.exports = { getSaves, setSavesOrUpdate, deleteSave, getHardwareElements }
+    const [username, token] = req.body.authCode.split(" ");
+    console.log("Get player saves:");
+
+    const decodedToken = decryptToken(token);
+    if (decodedToken.username !== username) return Apiresponse.badRequest(res, "Username in the token does not match the provided username");
+
+    const query = "SELECT saveId, lvl, time, money, cpuId, gpuId, ramId, stgId, lastBought FROM savedata WHERE userId = ? ORDER BY lastModified DESC";
+    const saveRes = await executeQuery(query, decodedToken.uid);
+
+    if (saveRes.length === 0) return Apiresponse.notFound(res, "User doesn't have saves!");
+    return Apiresponse.ok(res, { message: "Saves retrieved successfully", data: saveRes })
+}
+
+async function setSavesOrUpdate(req, res) {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) return Apiresponse.badRequest(res, errors.array()[0].msg);
+
+    const [username, token] = req.body.authCode.split(" ");
+    const requestBody = req.body;
+
+    const decodedToken = decryptToken(token);
+    if (decodedToken.username !== username) return Apiresponse.badRequest(res, "Username in the token does not match the provided username");
+
+    const determinedAction = await determineActionByHeader(req.headers["x-save-type"], requestBody.data, decodedToken.uid);
+    if (!!determinedAction.error) return Apiresponse.overrideRequest(res, determinedAction.error);
+
+    return Apiresponse.ok(res, { message: "Saves updated or created successfully" })
+}
+
+async function deleteSave(req, res){
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) return Apiresponse.badRequest(res, errors.array()[0].msg);
+
+    const request = req.body;
+    const [username, token] = request.authCode.split(" ");
+
+    const decodedToken = decryptToken(token);
+    if(decodedToken.username !== username) return ApiResponse.badRequest(res, "Username in the token does not match the provided username");
+
+    const query = "DELETE FROM savedata WHERE userId = ? AND saveId = ?";
+    const deleteRes = await executeQuery(query, [decodedToken.uid, request.saveId]);
+    return Apiresponse.ok(res, {successMessage: "Saves deleted successfully", data: deleteRes});
+}
+
+
+
+
+module.exports = { getHardwareElements, getSaves, setSavesOrUpdate, deleteSave }
