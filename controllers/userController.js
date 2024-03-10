@@ -280,7 +280,6 @@ const { createToken, decryptToken } = require('./tokenGeneration');
 const emailController = require("./emailController");
 
 const queries = require('../JSON documents/queries.json');
-const { get } = require("../routes/userRoutes");
 
 async function checkUserExists(username, email) {
   let query = queries.selectUserByUsername;
@@ -292,6 +291,8 @@ async function checkUserExists(username, email) {
   return false;
 }
 
+
+//TODO FINISH APPTYPE LOGIN RETURNS
 async function handleLoginType(username, password, appType = "") {
 
   const user = await checkUserExists(username, "")
@@ -382,6 +383,26 @@ async function forgotPassword(req, res) {
   return Apiresponse.ok(res, { message: "Password reset email sent successfully" });
 }
 
+async function validateResetToken(req, res) {
+  const request = req.body;
+
+  console.log('Validating token:');
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) return Apiresponse.badRequest(res, errors.array()[0].msg);
+
+  const decodedToken = decryptToken(request.token);
+  if (!!decodedToken.error) return Apiresponse.badRequest(res, decodedToken.error);
+
+  const query = "SELECT passwordResetToken FROM userTbl WHERE uid = ?";
+  const checkIfTokenIsValid = await executeQuery(query, decodedToken.uid);
+
+  if (checkIfTokenIsValid[0].passwordResetToken === null) return Apiresponse.notFound(res, "Reset token not found");
+  if (checkIfTokenIsValid[0].passwordResetToken !== request.token) return Apiresponse.badRequest(res, "Invalid reset token");
+  if (decodedToken.expires_at < Date.now() / 1000) return Apiresponse.badRequest(res, "Reset token expired");
+
+  return Apiresponse.ok(res, { message: "Reset token found", data: [{ passwordResetToken: checkIfTokenIsValid[0].passwordResetToken }] });
+}
+
 async function resetPassword(req, res) {
   const request = req.body;
 
@@ -408,4 +429,4 @@ async function resetPassword(req, res) {
   return Apiresponse.ok(res, { message: "Password reset was successful and password changed email sent successfully" });
 }
 
-module.exports = { registerPlayer, loginPlayer, forgotPassword, resetPassword };
+module.exports = { registerPlayer, loginPlayer, forgotPassword, validateResetToken, resetPassword };

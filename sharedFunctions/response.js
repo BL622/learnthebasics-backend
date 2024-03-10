@@ -23,5 +23,8 @@ class ApiResponse {
     return this.send(res, 500, { error: message, success: false });
   }
 
+  static overrideRequest(res, message){
+    return this.send(res, 450, {error: message, success: false});
+  }
 }
 module.exports = ApiResponse
