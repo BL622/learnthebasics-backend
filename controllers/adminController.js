@@ -26,8 +26,8 @@ async function isAdmin(req, res) {
 }
 
 async function getTableNames(req, res) {
-    const query = "SELECT TABLE_NAME, COLUMN_NAME, COLUMN_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ?";
-    const tableNameRes = await executeQuery(query, 'learnthebasics');
+    const query = "SELECT TABLE_NAME, COLUMN_NAME, COLUMN_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME <> ? AND TABLE_NAME <> ?";
+    const tableNameRes = await executeQuery(query, ['learnthebasics', 'jobsTbl', 'statsTbl']);
 
     return Apiresponse.ok(res, { message: "Table names select was successful", data: tableNameRes })
 }
