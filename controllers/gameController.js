@@ -34,11 +34,14 @@ const gameController = {
 
         const uId = decodedToken.uid;
 
-        const query = `
-      SELECT saveId, lvl, time, money, cpuId, gpuId, ramId, stgId, lastBought
-      FROM savedata
-      WHERE userId = ?
-      ORDER BY lastModified DESC
+        const query = `SELECT
+        savedata.saveId, lvl, time, money, cpuId, gpuId, ramId, stgId, lastBought,
+         jobsTbl.encryptedJobs
+       FROM jobsTbl
+         INNER JOIN savedata
+           ON jobsTbl.saveId = savedata.id
+       WHERE savedata.userId = ?
+       ORDER BY lastModified DESC
     `;
         const savesResults = await executeQuery(
           query,
