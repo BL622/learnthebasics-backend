@@ -185,13 +185,13 @@ const checkExistingSave = async (uId, saveId, res) => {
 
 const updateSave = async (uId, save, res) => {
   const updateQuery = `
-      UPDATE savedata
-      SET lvl = ?, time = ?, money = ?, cpuId = ?, gpuId = ?, ramId = ?, stgId = ?, lastBought = ?
-      WHERE userId = ? AND saveId = ?
+      UPDATE savedata, jobsTbl
+      SET savedata.lvl = ?, savedata.time = ?, savedata.money = ?, savedata.cpuId = ?, savedata.gpuId = ?, savedata.ramId = ?, savedata.stgId = ?, savedata.lastBought = ?, jobsTbl.encryptedJobs = ?
+      WHERE savedata.userId = ? AND savedata.saveId = ?
   `;
 
   const updateValues = [
-    save.lvl, save.time, save.money, save.cpuId, save.gpuId, save.ramId, save.stgId, save.lastBought,
+    save.lvl, save.time, save.money, save.cpuId, save.gpuId, save.ramId, save.stgId, save.lastBought, save.jobs,
     uId, save.saveId
   ];
 
