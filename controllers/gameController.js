@@ -4,14 +4,6 @@ const Apiresponse = require("../sharedFunctions/response");
 const { executeQuery } = require('../sharedFunctions/functions');
 const { decryptToken } = require('./tokenGeneration');
 
-async function updateSave(uId, values, saveId) {
-    const query = "UPDATE savedata SET ? WHERE saveId = ? AND userId = ?";
-    for (const save of values) {
-        await executeQuery(query, [save, saveId, uId]);
-    }
-
-    return { success: true };
-}
 
 async function determineActionByHeader(appType, data, uId) {
     const saveId = data[0].saveId;
@@ -23,22 +15,22 @@ async function determineActionByHeader(appType, data, uId) {
         case undefined:
             if (existingSaveCheck.length) return { error: "Would you like to override your existing save with this name?" };
 
-            query = "CALL createFirstSaveFile(?,?)";
+            query = "CALL createFirstSaveAndEmptyJob(?,?)";
             await executeQuery(query, [saveId, uId]);
 
             break;
         case "update":
-            if (existingSaveCheck.length) return await updateSave(uId, data, saveId);
-            console.log("check")
-            query = "INSERT INTO savedata SET ?";
-            data[0] = Object.assign({userId: uId, saveId: saveId}, data[0])
-            await executeQuery(query, data[0]);
+            const encryptedJobs = data[0]["jobs"];
+            delete data[0]["jobs"]
+
+            const query = "UPDATE savedata, jobsTbl SET ?, jobsTbl.encryptedJobs = ? WHERE savedata.saveId = ? AND savedata.userId = ? AND jobsTbl.saveId = (SELECT id FROM savedata WHERE saveId = ?) AND jobsTbl.userId = ?";
+            await executeQuery(query, [data[0], encryptedJobs, saveId, uId, saveId, uId]);
 
             break;
         case "override":
 
-            query = "UPDATE savedata SET lvl=0,money=0,time=0,cpuId=0,gpuId=0,ramId=0,stgId=0,lastBought='{\"cpu\":0,\"gpu\":0,\"ram\":0,\"stg\":0}' WHERE userId = ? AND saveId = ?";
-            await executeQuery(query, [uId, saveId]);
+            query = "UPDATE savedata, jobsTbl SET lvl=0,money=0,time=0,cpuId=0,gpuId=0,ramId=0,stgId=0,lastBought='{\"cpu\":0,\"gpu\":0,\"ram\":0,\"stg\":0}', jobsTbl.encryptedJobs = '#-#-#-#' WHERE savedata.userId = ? AND savedata.saveId = ? AND jobsTbl.saveId = (SELECT id FROM savedata WHERE saveId = ?) AND jobsTbl.userId = ?";
+            await executeQuery(query, [uId, saveId, saveId, uId]);
 
             break;
     }
@@ -46,7 +38,7 @@ async function determineActionByHeader(appType, data, uId) {
     return true;
 }
 
-async function getHardwareElements(req, res){
+async function getHardwareElements(req, res) {
     const [cpu, gpu, ram, stg] = await Promise.all([
         executeQuery("SELECT * FROM `cpuTbl` ORDER BY hardwareId;"),
         executeQuery("SELECT * FROM `gpuTbl` ORDER BY hardwareId;"),
@@ -80,18 +72,17 @@ async function setSavesOrUpdate(req, res) {
     if (!errors.isEmpty()) return Apiresponse.badRequest(res, errors.array()[0].msg);
 
     const [username, token] = req.body.authCode.split(" ");
-    const requestBody = req.body;
-
+    const request = req.body;
     const decodedToken = decryptToken(token);
     if (decodedToken.username !== username) return Apiresponse.badRequest(res, "Username in the token does not match the provided username");
 
-    const determinedAction = await determineActionByHeader(req.headers["x-save-type"], requestBody.data, decodedToken.uid);
+    const determinedAction = await determineActionByHeader(req.headers["x-save-type"], request.data, decodedToken.uid);
     if (!!determinedAction.error) return Apiresponse.overrideRequest(res, determinedAction.error);
 
     return Apiresponse.ok(res, { message: "Saves updated or created successfully" })
 }
 
-async function deleteSave(req, res){
+async function deleteSave(req, res) {
     const errors = validationResult(req);
     if (!errors.isEmpty()) return Apiresponse.badRequest(res, errors.array()[0].msg);
 
@@ -99,11 +90,11 @@ async function deleteSave(req, res){
     const [username, token] = request.authCode.split(" ");
 
     const decodedToken = decryptToken(token);
-    if(decodedToken.username !== username) return ApiResponse.badRequest(res, "Username in the token does not match the provided username");
+    if (decodedToken.username !== username) return ApiResponse.badRequest(res, "Username in the token does not match the provided username");
 
     const query = "DELETE FROM savedata WHERE userId = ? AND saveId = ?";
     const deleteRes = await executeQuery(query, [decodedToken.uid, request.saveId]);
-    return Apiresponse.ok(res, {successMessage: "Saves deleted successfully", data: deleteRes});
+    return Apiresponse.ok(res, { successMessage: "Saves deleted successfully", data: deleteRes });
 }
 
 

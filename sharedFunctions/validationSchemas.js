@@ -58,7 +58,8 @@ const setSavesOrUpdateSchema = [
   body('data.*.gpuId').optional().isInt({ min: -128, max: 127 }).withMessage('Invalid GPU ID'),
   body('data.*.ramId').optional().isInt({ min: -128, max: 127 }).withMessage('Invalid RAM ID'),
   body('data.*.stgId').optional().isInt({ min: -128, max: 127 }).withMessage('Invalid storage ID'),
-  body('data.*.lastBought').optional().isString().notEmpty().withMessage('Invalid last bought')
+  body('data.*.lastBought').optional().isString().notEmpty().withMessage('Invalid last bought'),
+  body('data.*.jobs').optional().notEmpty().withMessage('Invalid jobs')
 ];
 
 const deleteSaveSchema = [
