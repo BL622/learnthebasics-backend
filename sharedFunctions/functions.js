@@ -187,12 +187,12 @@ const updateSave = async (uId, save, res) => {
   const updateQuery = `
       UPDATE savedata, jobsTbl
       SET savedata.lvl = ?, savedata.time = ?, savedata.money = ?, savedata.cpuId = ?, savedata.gpuId = ?, savedata.ramId = ?, savedata.stgId = ?, savedata.lastBought = ?, jobsTbl.encryptedJobs = ?
-      WHERE savedata.userId = ? AND savedata.saveId = ?
+      WHERE savedata.userId = ? AND savedata.saveId = ?  AND jobsTbl.userId = ? AND jobsTbl.saveId = (SELECT id FROM savedata WHERE saveId = ?)
   `;
 
   const updateValues = [
     save.lvl, save.time, save.money, save.cpuId, save.gpuId, save.ramId, save.stgId, save.lastBought, save.jobs,
-    uId, save.saveId
+    uId, save.saveId, uId, save.saveId
   ];
 
   await executeQuery(updateQuery, updateValues, `Query to update save`, res, "Save updated successfully");
