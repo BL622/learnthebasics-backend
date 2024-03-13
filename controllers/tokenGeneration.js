@@ -19,8 +19,7 @@ const createToken = (userData, expirationTimeInMinutes = null) => {
   };
 
   if (expirationTimeInMinutes !== null) {
-    const expirationTime = currentTime + expirationTimeInMinutes * 60;
-    tokenData.expires_at = expirationTime;
+      tokenData.expires_at = currentTime + expirationTimeInMinutes * 60;
   }
 
   const iv = crypto.randomBytes(12);
@@ -33,9 +32,7 @@ const createToken = (userData, expirationTimeInMinutes = null) => {
   const ciphertextWithTag = encryptedToken + ':' + cipher.getAuthTag().toString('hex');
   const signature = hmac.update(ciphertextWithTag).digest('hex');
 
-  const finalToken = `${iv.toString('hex')}.${ciphertextWithTag}.${signature}`;
-
-  return finalToken;
+  return `${iv.toString('hex')}.${ciphertextWithTag}.${signature}`;
 };
 
 const decryptToken = (token) => {
@@ -57,9 +54,7 @@ const decryptToken = (token) => {
 
   let decryptedToken = decipher.update(receivedCiphertext, 'hex', 'utf-8');
   decryptedToken += decipher.final('utf-8');
-  const tokenData = JSON.parse(decryptedToken);
-
-  return tokenData;
+  return JSON.parse(decryptedToken);
 };
 
 module.exports = { createToken, decryptToken };

@@ -4,8 +4,6 @@ const Apiresponse = require("../sharedFunctions/response");
 const { executeQuery, generateHash, compareHash } = require('../sharedFunctions/functions');
 const { decryptToken } = require('./tokenGeneration');
 
-const mysql = require('mysql2')
-
 async function isAdmin(req, res) {
     const errors = validationResult(req);
     if (!errors.isEmpty()) return Apiresponse.badRequest(res, errors.array()[0].msg);
@@ -19,7 +17,7 @@ async function isAdmin(req, res) {
     const query = "SELECT isAdmin FROM userTbl WHERE uid = ?";
     const adminRes = await executeQuery(query, decodedToken.uid);
 
-    if (adminRes[0].isAdmin == true && adminRes[0].isAdmin == decodedToken.isAdmin) adminRes[0].isAdmin = !!adminRes[0].isAdmin;
+    if (!!(adminRes[0].isAdmin) && adminRes[0].isAdmin === decodedToken.isAdmin) adminRes[0].isAdmin = !!adminRes[0].isAdmin;
     else adminRes[0].isAdmin = !!adminRes[0].isAdmin;
 
     return Apiresponse.ok(res, { message: "User validation was successful", data: [{ isAdmin: adminRes[0].isAdmin }] })

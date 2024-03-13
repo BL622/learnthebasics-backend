@@ -13,8 +13,8 @@ async function checkUserExists(username, email) {
 
   query = queries.selectUserByEmail;
   const emailRes = await executeQuery(query, email);
-  if (usernameRes.length !== 0 || emailRes.length !== 0) return true;
-  return false;
+  return usernameRes.length !== 0 || emailRes.length !== 0;
+
 }
 
 
@@ -148,7 +148,7 @@ async function resetPassword(req, res) {
 
   const hashedPassword = await generateHash(request.password);
   query = "UPDATE userTbl SET password = ?, passwordResetToken = NULL WHERE uid = ?`";
-  await executeQuery(hashedPassword, [hashedPassword, decodedToken.uid]);
+  await executeQuery(query, [hashedPassword, decodedToken.uid]);
 
   const emailResult = await emailController.passwordResetSuccessful(decodedToken.email, decodedToken.username);
   if (emailResult.error) return Apiresponse.internalServerError(res, "Error sending the password changed email");

@@ -23,7 +23,7 @@ async function determineActionByHeader(appType, data, uId) {
             const encryptedJobs = data[0]["jobs"];
             delete data[0]["jobs"]
 
-            const query = "UPDATE savedata, jobsTbl SET ?, jobsTbl.encryptedJobs = ? WHERE savedata.saveId = ? AND savedata.userId = ? AND jobsTbl.saveId = (SELECT id FROM savedata WHERE saveId = ?) AND jobsTbl.userId = ?";
+            query = "UPDATE savedata, jobsTbl SET ?, jobsTbl.encryptedJobs = ? WHERE savedata.saveId = ? AND savedata.userId = ? AND jobsTbl.saveId = (SELECT id FROM savedata WHERE saveId = ?) AND jobsTbl.userId = ?";
             await executeQuery(query, [data[0], encryptedJobs, saveId, uId, saveId, uId]);
 
             break;

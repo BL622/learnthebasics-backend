@@ -1,4 +1,4 @@
-const { body, checkSchema } = require('express-validator');
+const { body } = require('express-validator');
 
 const usernameRegex = /^[a-zA-Z][a-zA-Z0-9_.-]{4,24}$/;
 const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@.#$!%?&^])[A-Za-z\d@.#$!%?&]{7,23}$/;

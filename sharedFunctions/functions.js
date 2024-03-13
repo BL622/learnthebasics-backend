@@ -1,5 +1,4 @@
 const db = require("../config/db");
-const { createToken } = require('../controllers/tokenGeneration');
 const bcrypt = require('bcrypt');
 
 async function executeQuery(query, values) {
@@ -15,13 +14,11 @@ async function executeQuery(query, values) {
 }
 
 async function generateHash(password) {
-  const hashedPassword = await bcrypt.hash(password, 10);
-  return hashedPassword
+    return await bcrypt.hash(password, 10)
 }
 
 async function compareHash(password, hashedPassword) {
-  const passwordMatch = await bcrypt.compare(password, hashedPassword);
-  return passwordMatch
+    return await bcrypt.compare(password, hashedPassword)
 }
 
 
