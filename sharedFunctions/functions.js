@@ -199,7 +199,7 @@ const updateSave = async (uId, save, res) => {
 }
 
 const createSave = async (uId, saveId, res) => {
-  const insertQuery = `CALL createFirstSaveFile(?,?)`;
+  const insertQuery = `CALL createFirstSaveAndEmptyJob(?,?)`;
 
   const insertValues = [
     saveId, uId
