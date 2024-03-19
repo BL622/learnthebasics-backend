@@ -1,9 +1,10 @@
 const { validationResult } = require("express-validator");
 
-const {log} = require('../sharedFunctions/logFunction')
+const { log } = require('../sharedFunctions/logFunction')
 const Apiresponse = require("../sharedFunctions/response");
 const { executeQuery, generateHash, compareHash } = require("../sharedFunctions/functions");
 const { createToken, decryptToken } = require('./tokenGeneration');
+const {createStatistics} = require('../sharedFunctions/generateStatistics');
 const emailController = require("./emailController");
 
 const queries = require('../JSON documents/queries.json');
@@ -20,21 +21,40 @@ async function checkUserExists(username, email) {
   return usernameRes.length !== 0 || emailRes.length !== 0;
 }
 
-
-//TODO FINISH APPTYPE LOGIN RETURNS
 async function handleLoginType(username, password, appType = "") {
 
   const user = await checkUserExists(username, "")
 
   if (!user) return 404
   log("Handle login by appType:")
+
+  let response;
   let query = queries.selectUserByUsername;
   let selectRes = await executeQuery(query, username);
   const matchPassword = await compareHash(password, selectRes[0].password);
-
   if (!matchPassword) return false;
+  
+  log(appType, 'info')
+  switch (appType) {
 
-  return selectRes[0];
+    case "web":
+      const statsInfo = await createStatistics(username);
+
+      userInfo = { 
+        data: [username, createToken(selectRes[0])]
+      }
+
+      response = {...userInfo, ...{stats: statsInfo}};
+
+      break;
+    default:
+      response = { 
+        data: [username, createToken(selectRes[0])] 
+      }
+      break;
+  }
+
+  return response;
 }
 
 async function checkAndUpdateResetToken(user, email) {
@@ -96,7 +116,7 @@ async function loginPlayer(req, res) {
   if (!user) return Apiresponse.unauthorized(res, "Invalid password");
   log(user, 'success')
 
-  return Apiresponse.ok(res, { data: [user.username, createToken(user)] })
+  return Apiresponse.ok(res, user)
 }
 
 async function forgotPassword(req, res) {
