@@ -22,6 +22,7 @@ async function createStatistics(username) {
 
     let query = "SELECT savedata.saveId, statsTbl.completedJobs, statsTbl.fastestCompletion, savedata.money, statsTbl.totalIncome, JSON_EXTRACT(savedata.lastBought, '$.cpu') + 1 AS boughtCpu, JSON_EXTRACT(savedata.lastBought, '$.gpu') + 1 AS boughtGpu, JSON_EXTRACT(savedata.lastBought, '$.ram') + 1 AS boughtRam, JSON_EXTRACT(savedata.lastBought, '$.stg') + 1 AS boughtStg, savedata.time FROM statsTbl INNER JOIN userTbl ON statsTbl.userId = userTbl.uid INNER JOIN savedata ON statsTbl.saveId = savedata.id AND savedata.userId = userTbl.uid WHERE userTbl.username = ? ORDER BY savedata.lastModified DESC";
     const statsRes = await executeQuery(query, username);
+    log(statsRes,'success');
 
     log("Calculating overall time played:");
     stats = { ...stats, ...{ overallTime: statsRes.reduce((sum, x) => sum + x.time, 0) } };
@@ -55,7 +56,6 @@ async function createStatistics(username) {
     log("Counting save files:");
     stats = {...stats, ...{saveFileCount: statsRes.length}};
 
-    log(stats, 'error')
     return stats;
 }
 

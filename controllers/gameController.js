@@ -21,16 +21,22 @@ async function determineActionByHeader(appType, data, uId) {
             break;
         case "update":
             const encryptedJobs = data[0]["jobs"];
-            delete data[0]["jobs"]
+            const completedJobs = data[0]["completedJobs"];
+            const fastestCompletion = data[0]["fastestCompletion"];
+            const totalIncome = data[0]["totalIncome"];
+            delete data[0]["jobs"];
+            delete data[0]["completedJobs"];
+            delete data[0]["fastestCompletion"];
+            delete data[0]["totalIncome"];
 
-            query = "UPDATE savedata, jobsTbl SET ?, jobsTbl.encryptedJobs = ? WHERE savedata.saveId = ? AND savedata.userId = ? AND jobsTbl.saveId = (SELECT id FROM savedata WHERE saveId = ?) AND jobsTbl.userId = ?";
-            await executeQuery(query, [data[0], encryptedJobs, saveId, uId, saveId, uId]);
+            query = "UPDATE savedata, jobsTbl, statsTbl SET ?, jobsTbl.encryptedJobs = ?, statsTbl.completedJobs = ?, statsTbl.fastestCompletion = ?, statsTbl.totalIncome = ? WHERE savedata.saveId = ? AND savedata.userId = ? AND jobsTbl.saveId = (SELECT id FROM savedata WHERE saveId = ?) AND jobsTbl.userId = ? AND statsTbl.saveId = (SELECT id FROM savedata WHERE saveId = ?) AND statsTbl.userId = ?";
+            await executeQuery(query, [data[0], encryptedJobs, completedJobs, fastestCompletion, totalIncome, saveId, uId, saveId, uId, saveId, uId]);
 
             break;
         case "override":
 
-            query = "UPDATE savedata, jobsTbl SET lvl=0,money=0,time=0,cpuId=0,gpuId=0,ramId=0,stgId=0,lastBought='{\"cpu\":0,\"gpu\":0,\"ram\":0,\"stg\":0}', jobsTbl.encryptedJobs = '#-#-#-#' WHERE savedata.userId = ? AND savedata.saveId = ? AND jobsTbl.saveId = (SELECT id FROM savedata WHERE saveId = ?) AND jobsTbl.userId = ?";
-            await executeQuery(query, [uId, saveId, saveId, uId]);
+            query = "UPDATE savedata, jobsTbl, statsTbl SET lvl=0,money=0,time=0,cpuId=0,gpuId=0,ramId=0,stgId=0,lastBought='{\"cpu\":0,\"gpu\":0,\"ram\":0,\"stg\":0}', jobsTbl.encryptedJobs = '#-#-#-#', statsTbl.completedJobs = 0, statsTbl.fastestCompletion = 0, statsTbl.totalIncome = null WHERE savedata.userId = ? AND savedata.saveId = ? AND jobsTbl.saveId = (SELECT id FROM savedata WHERE saveId = ?) AND jobsTbl.userId = ? AND statsTbl.saveId = (SELECT id FROM savedata WHERE saveId = ?) AND statsTbl.userId = ?";
+            await executeQuery(query, [uId, saveId, saveId, uId, saveId, uId]);
 
             break;
     }
@@ -60,7 +66,7 @@ async function getSaves(req, res) {
     const decodedToken = decryptToken(token);
     if (decodedToken.username !== username) return Apiresponse.badRequest(res, "Username in the token does not match the provided username");
 
-    const query = "SELECT savedata.saveId, lvl, time, money, cpuId, gpuId, ramId, stgId, lastBought, jobsTbl.encryptedJobs FROM jobsTbl INNER JOIN savedata ON jobsTbl.saveId = savedata.id WHERE savedata.userId = ? ORDER BY lastModified DESC";
+    const query = "SELECT savedata.saveId, lvl, time, money, cpuId, gpuId, ramId, stgId, lastBought, jobsTbl.encryptedJobs FROM jobsTbl INNER JOIN savedata ON jobsTbl.saveId = savedata.id INNER JOIN statsTbl ON statsTbl.saveId = savedata.id WHERE savedata.userId = ? ORDER BY lastModified DESC";
     const saveRes = await executeQuery(query, decodedToken.uid);
 
     if (saveRes.length === 0) return Apiresponse.notFound(res, "User doesn't have saves!");

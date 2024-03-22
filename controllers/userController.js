@@ -85,7 +85,7 @@ async function registerPlayer(req, res) {
   log("Registering player:");
 
   const errors = validationResult(req);
-  log(errors.array[0].msg, 'error');
+  log(errors, 'error');
   if (!errors.isEmpty()) return Apiresponse.badRequest(res, errors.array()[0].msg);
 
   log("Check user existence");

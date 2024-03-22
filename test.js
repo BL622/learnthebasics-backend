@@ -52,4 +52,23 @@ describe('registration', () => {
         assert.notDeepEqual(response.body, {message: "User registered successfully", data: {}})
         assert.equal(response.statusCode, 200)
     })
+});
+
+describe('login', () => {
+    let response;
+    let body;
+    it('should return missing POST fields', async () =>{
+        body ={}
+        response = await sendRequest('POST', '/player/login', body);
+        assert.equal(response.statusCode, 400)
+    });
+    it('should return badRequest user not found', async () =>{
+        body ={
+            username: 'asdasdasd1',
+            password: 'Admin12!'
+        }
+        response = await sendRequest('POST', '/player/login', body);
+        assert.deepStrictEqual(response.body, {error: "User not found", success: false})
+        assert.equal(response.statusCode, 404)
+    });
 })
