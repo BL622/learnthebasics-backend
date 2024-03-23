@@ -66,7 +66,7 @@ async function getSaves(req, res) {
     const decodedToken = decryptToken(token);
     if (decodedToken.username !== username) return Apiresponse.badRequest(res, "Username in the token does not match the provided username");
 
-    const query = "SELECT savedata.saveId, lvl, time, money, cpuId, gpuId, ramId, stgId, lastBought, jobsTbl.encryptedJobs FROM jobsTbl INNER JOIN savedata ON jobsTbl.saveId = savedata.id INNER JOIN statsTbl ON statsTbl.saveId = savedata.id WHERE savedata.userId = ? ORDER BY lastModified DESC";
+    const query = "SELECT savedata.saveId, lvl, time, money, cpuId, gpuId, ramId, stgId, lastBought, jobsTbl.encryptedJobs, statsTbl.completedJobs, statsTbl.fastestCompletion, statsTbl.totalIncome FROM jobsTbl INNER JOIN savedata ON jobsTbl.saveId = savedata.id INNER JOIN statsTbl ON statsTbl.saveId = savedata.id WHERE savedata.userId = ? ORDER BY lastModified DESC";
     const saveRes = await executeQuery(query, decodedToken.uid);
 
     if (saveRes.length === 0) return Apiresponse.notFound(res, "User doesn't have saves!");
