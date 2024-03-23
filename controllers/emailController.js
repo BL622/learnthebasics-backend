@@ -1,6 +1,6 @@
 const fs = require('fs').promises;
 const path = require('path');
-const {log} = require('../sharedFunctions/logFunction')
+const { log } = require('../sharedFunctions/logFunction')
 const transporter = require('../config/emailConfig');
 
 const LOG_PREFIX = 'Email Service: ';
@@ -8,7 +8,7 @@ const LOG_PREFIX = 'Email Service: ';
 const defaultEmailConfig = {
   sender: 'noreply@learnthebasics.com',
   stylesDir: path.join(__dirname, '..', 'emailStyles'),
-  passwordResetUrl: 'http://localhost:3000/password-reset/',
+  passwordResetUrl: 'https://bgs.jedlik.eu/learnthebasics/password-reset/',
 };
 
 const errors = {
@@ -24,7 +24,7 @@ const readHtmlTemplate = async templatePath => {
   }
 };
 
-const replacePlaceholders = (template, replacements = {}) => 
+const replacePlaceholders = (template, replacements = {}) =>
   template?.replace(/{{(\w+)}}/g, (_, key) => replacements[key] || '');
 
 const sendMail = async (mailOptions) => {
@@ -35,7 +35,7 @@ const sendMail = async (mailOptions) => {
   } catch (error) {
     const errorMessage = errors.sendingEmail();
     log(`${LOG_PREFIX}${errorMessage}: ${error.message}`, 'error');
-    return {error: true, message: 'Email sending is not possible'}
+    return { error: true, message: 'Email sending is not possible' }
   }
 };
 
@@ -54,11 +54,11 @@ const sendSpecializedEmail = async (userEmail, subject, templateFile, replacemen
   return sendMail(mailOptions);
 };
 
-const sendPasswordResetEmail = (userEmail, resetToken, username) => 
-  sendSpecializedEmail(userEmail, 'Password Reset', 'index', 
+const sendPasswordResetEmail = (userEmail, resetToken, username) =>
+  sendSpecializedEmail(userEmail, 'Password Reset', 'index',
     { username, link: `<a href="${defaultEmailConfig.passwordResetUrl}${resetToken}" target="_blank">link</a>` });
 
-const passwordResetSuccessful = (userEmail, username) => 
+const passwordResetSuccessful = (userEmail, username) =>
   sendSpecializedEmail(userEmail, 'Password Reset Successful', 'successful', { username });
 
 module.exports = { sendPasswordResetEmail, passwordResetSuccessful };

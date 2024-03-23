@@ -16,7 +16,7 @@ async function sendRequest(method, route, body, extraHeader = ""){
         if(error) throw new Error(error)
         resBody = {statusCode: response.statusCode, body: JSON.parse(response.body)}
     })
-    await new Promise(resolve => setTimeout(resolve, 100))
+    await new Promise(resolve => setTimeout(resolve, 200))
     return resBody
 }
 

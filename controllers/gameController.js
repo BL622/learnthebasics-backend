@@ -8,11 +8,14 @@ const { decryptToken } = require('./tokenGeneration');
 async function determineActionByHeader(appType, data, uId) {
     const saveId = data[0].saveId;
     delete data[0]["saveId"];
+    log('Checking existing save', 'info')
     let query = "SELECT * FROM savedata WHERE saveId = ? AND userId = ?";
     const existingSaveCheck = await executeQuery(query, [saveId, uId]);
 
+    log('Determine action:')
     switch (appType) {
         case undefined:
+            log('Creating new save file:', 'info')
             if (existingSaveCheck.length) return { error: "Would you like to override your existing save with this name?" };
 
             query = "CALL createFirstSaveAndEmptyJob(?,?)";
@@ -20,6 +23,7 @@ async function determineActionByHeader(appType, data, uId) {
 
             break;
         case "update":
+            log('Updating save file:', 'info')
             const encryptedJobs = data[0]["jobs"];
             const completedJobs = data[0]["completedJobs"];
             const fastestCompletion = data[0]["fastestCompletion"];
@@ -34,7 +38,7 @@ async function determineActionByHeader(appType, data, uId) {
 
             break;
         case "override":
-
+            log('Overriding save file:', 'info')
             query = "UPDATE savedata, jobsTbl, statsTbl SET lvl=0,money=0,time=0,cpuId=0,gpuId=0,ramId=0,stgId=0,lastBought='{\"cpu\":0,\"gpu\":0,\"ram\":0,\"stg\":0}', jobsTbl.encryptedJobs = '#-#-#-#', statsTbl.completedJobs = 0, statsTbl.fastestCompletion = 0, statsTbl.totalIncome = null WHERE savedata.userId = ? AND savedata.saveId = ? AND jobsTbl.saveId = (SELECT id FROM savedata WHERE saveId = ?) AND jobsTbl.userId = ? AND statsTbl.saveId = (SELECT id FROM savedata WHERE saveId = ?) AND statsTbl.userId = ?";
             await executeQuery(query, [uId, saveId, saveId, uId, saveId, uId]);
 
@@ -45,24 +49,26 @@ async function determineActionByHeader(appType, data, uId) {
 }
 
 async function getHardwareElements(req, res) {
+    log('Getting hardware elements:');
     const [cpu, gpu, ram, stg] = await Promise.all([
         executeQuery("SELECT * FROM `cpuTbl` ORDER BY hardwareId;"),
         executeQuery("SELECT * FROM `gpuTbl` ORDER BY hardwareId;"),
         executeQuery("SELECT * FROM `ramTbl` ORDER BY hardwareId;"),
         executeQuery("SELECT * FROM `stgTbl` ORDER BY hardwareId;")
     ].map(promise => promise.then(result => result)));
-    console.log({ cpu, gpu, ram, stg })
 
     Apiresponse.ok(res, { cpu, gpu, ram, stg });
 }
 
 async function getSaves(req, res) {
+    log('Getting save files for user');
     const errors = validationResult(req);
+    log(errors.array[0], 'error');
     if (!errors.isEmpty()) return Apiresponse.badRequest(res, errors.array()[0].msg);
 
     const [username, token] = req.body.authCode.split(" ");
-    console.log("Get player saves:");
 
+    log('Decoding token:', 'info');
     const decodedToken = decryptToken(token);
     if (decodedToken.username !== username) return Apiresponse.badRequest(res, "Username in the token does not match the provided username");
 
@@ -70,11 +76,14 @@ async function getSaves(req, res) {
     const saveRes = await executeQuery(query, decodedToken.uid);
 
     if (saveRes.length === 0) return Apiresponse.notFound(res, "User doesn't have saves!");
+    log(saveRes, 'success')
     return Apiresponse.ok(res, { message: "Saves retrieved successfully", data: saveRes })
 }
 
 async function setSavesOrUpdate(req, res) {
+    log('Updating saves or creating saves:')
     const errors = validationResult(req);
+    log(errors.array[0], 'error');
     if (!errors.isEmpty()) return Apiresponse.badRequest(res, errors.array()[0].msg);
 
     const [username, token] = req.body.authCode.split(" ");
@@ -85,11 +94,14 @@ async function setSavesOrUpdate(req, res) {
     const determinedAction = await determineActionByHeader(req.headers["x-save-type"], request.data, decodedToken.uid);
     if (!!determinedAction.error) return Apiresponse.overrideRequest(res, determinedAction.error);
 
+    log('Successful update or save', 'success')
     return Apiresponse.ok(res, { message: "Saves updated or created successfully" })
 }
 
 async function deleteSave(req, res) {
+    log('Deleting save file:')
     const errors = validationResult(req);
+    log(errors.array[0], 'error');
     if (!errors.isEmpty()) return Apiresponse.badRequest(res, errors.array()[0].msg);
 
     const request = req.body;
@@ -100,6 +112,7 @@ async function deleteSave(req, res) {
 
     const query = "DELETE FROM savedata WHERE userId = ? AND saveId = ?";
     const deleteRes = await executeQuery(query, [decodedToken.uid, request.saveId]);
+    log(deleteRes, 'success')
     return Apiresponse.ok(res, { successMessage: "Saves deleted successfully", data: deleteRes });
 }
 
