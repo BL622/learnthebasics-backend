@@ -1,8 +1,9 @@
-const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const dotenv = require('dotenv');
+dotenv.config()
 
-const secretKey = Buffer.from('My6VoJly9V2d9qJpIkZgD5V7cHokeCdr', 'utf-8');
+//My6VoJly9V2d9qJpIkZgD5V7cHokeCdr
+const secretKey = Buffer.from(process.env.SECRET_BUFFER, 'utf-8');
 
 const createToken = (userData, expirationTimeInMinutes = null) => {
 
@@ -18,8 +19,7 @@ const createToken = (userData, expirationTimeInMinutes = null) => {
   };
 
   if (expirationTimeInMinutes !== null) {
-    const expirationTime = currentTime + expirationTimeInMinutes * 60;
-    tokenData.expires_at = expirationTime;
+      tokenData.expires_at = currentTime + expirationTimeInMinutes * 60;
   }
 
   const iv = crypto.randomBytes(12);
@@ -32,9 +32,7 @@ const createToken = (userData, expirationTimeInMinutes = null) => {
   const ciphertextWithTag = encryptedToken + ':' + cipher.getAuthTag().toString('hex');
   const signature = hmac.update(ciphertextWithTag).digest('hex');
 
-  const finalToken = `${iv.toString('hex')}.${ciphertextWithTag}.${signature}`;
-
-  return finalToken;
+  return `${iv.toString('hex')}.${ciphertextWithTag}.${signature}`;
 };
 
 const decryptToken = (token) => {
@@ -46,7 +44,8 @@ const decryptToken = (token) => {
   const calculatedSignature = hmac.update(receivedCiphertextWithTag).digest('hex');
 
   if (calculatedSignature !== receivedSignature) {
-    throw new Error('Token is invalid: Signature mismatch');
+    new Error('Token is invalid: Signature mismatch');
+    return {error: "Token is invalid! Signature mismatch"}
   }
 
   // Decryption
@@ -55,10 +54,7 @@ const decryptToken = (token) => {
 
   let decryptedToken = decipher.update(receivedCiphertext, 'hex', 'utf-8');
   decryptedToken += decipher.final('utf-8');
-
-  const tokenData = JSON.parse(decryptedToken);
-
-  return tokenData;
+  return JSON.parse(decryptedToken);
 };
 
 module.exports = { createToken, decryptToken };

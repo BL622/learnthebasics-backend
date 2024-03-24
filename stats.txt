@@ -1,0 +1,14 @@
+random tip from each jobtype
+
+stats:
+-overall time
+-all jobs completed
+-fastest job complete time
+-fastest completion ranking
+-total income
+-total money spent
+-computer parts bought
+-most played save
+-last played save
+-saveFile count
+
