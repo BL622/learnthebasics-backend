@@ -3,6 +3,7 @@ const { validationResult } = require("express-validator");
 const Apiresponse = require("../sharedFunctions/response");
 const { executeQuery, generateHash, compareHash } = require('../sharedFunctions/functions');
 const { decryptToken } = require('./tokenGeneration');
+const queries = require('../JSON documents/queries.json')
 
 async function isAdmin(req, res) {
     const errors = validationResult(req);
@@ -14,7 +15,7 @@ async function isAdmin(req, res) {
 
     const decodedToken = decryptToken(token);
 
-    const query = "SELECT isAdmin FROM userTbl WHERE uid = ?";
+    const query = queries.checkIfIsAdmin;
     const adminRes = await executeQuery(query, decodedToken.uid);
 
     if (!!(adminRes[0].isAdmin) && adminRes[0].isAdmin === decodedToken.isAdmin) adminRes[0].isAdmin = !!adminRes[0].isAdmin;
@@ -24,7 +25,7 @@ async function isAdmin(req, res) {
 }
 
 async function getTableNames(req, res) {
-    const query = "SELECT TABLE_NAME, COLUMN_NAME, COLUMN_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME <> ? AND TABLE_NAME <> ?";
+    const query = queries.selectTableNamesAndColumns;
     const tableNameRes = await executeQuery(query, ['learnthebasics', 'jobsTbl', 'statsTbl']);
 
     return Apiresponse.ok(res, { message: "Table names select was successful", data: tableNameRes })
@@ -36,7 +37,7 @@ async function getRowsByTableName(req, res) {
 
     const request = req.body;
 
-    const query = "SELECT * FROM ??";
+    const query = queries.selectTableData;
     const tableRowsRes = await executeQuery(query, [request.tableName]);
 
     if (request.tableName === "userTbl") tableRowsRes.map(element => ({ ...element, isAdmin: element.isAdmin = !!element.isAdmin }));
@@ -50,7 +51,7 @@ async function insertRows(req, res) {
 
     const request = req.body;
 
-    const query = "INSERT INTO ?? SET ?";
+    const query = queries.insertTableInformationAdmin;
     if (request.tableName === "userTbl") request.data[0] = { ...request.data[0], password: await generateHash(request.data[0].password) };
 
     console.log(request.data)
@@ -71,7 +72,7 @@ async function updateRows(req, res) {
     const id = Object.values(request.data[0])[0];
     delete request.data[0][nameOfKey];
 
-    let query = "SELECT * FROM ?? WHERE ?? = ?";
+    let query = queries.selectForChangesUpdateAdmin;
     const changeCheck = await executeQuery(query, [request.tableName, nameOfKey, id]);
 
     let updatedData = { ...request.data[0] };
@@ -86,7 +87,7 @@ async function updateRows(req, res) {
 
     if (Object.keys(updatedData).length === 0) return Apiresponse.notModified(res, "No values changed");
 
-    query = "UPDATE ?? SET ? WHERE ?? = ?";
+    query = queries.updateChangesAdmin;
     const updateRes = await executeQuery(query, [[request.tableName], updatedData, [nameOfKey], id]);
 
     return Apiresponse.ok(res, { message: "Update was successful", data: updateRes })
@@ -97,7 +98,7 @@ async function deleteRows(req, res) {
     if (!errors.isEmpty()) return Apiresponse.badRequest(res, errors.array()[0].msg);
 
     const request = req.body;
-    const query = "DELETE FROM ?? WHERE ?? = ?";
+    const query = queries.deleteDataAdmin;
 
     const deleteRes = await executeQuery(query,[[request.tableName], [request.fieldName], request.fieldValue]);
 

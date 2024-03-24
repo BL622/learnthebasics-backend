@@ -73,7 +73,7 @@ async function checkAndUpdateResetToken(user, email) {
 
   const resetToken = createToken(user, 60);
   log("Generating new token: " + resetToken, 'info');
-  const query = "UPDATE userTbl SET passwordResetToken = ? WHERE email = ?";
+  const query = queries.updateResetTokenByEmail;
   await executeQuery(query, [resetToken, email]);
 
   return resetToken;
@@ -92,7 +92,7 @@ async function registerPlayer(req, res) {
   const user = await checkUserExists(request.username, request.email);
   if (user) return Apiresponse.badRequest(res, "Email or username already in use!");
 
-  const insertUser = "INSERT INTO userTbl (email, username, password) VALUES (?,?,?)";
+  const insertUser = queries.insertNewUser;
   delete request["confirmPassword"];
   log("Creating hashed password", 'info')
   request.password = await generateHash(request.password);
@@ -157,7 +157,7 @@ async function validateResetToken(req, res) {
   const decodedToken = decryptToken(request.token);
   if (!!decodedToken.error) return Apiresponse.badRequest(res, decodedToken.error);
 
-  const query = "SELECT passwordResetToken FROM userTbl WHERE uid = ?";
+  const query = queries.selectTokenByUid;
   const checkIfTokenIsValid = await executeQuery(query, decodedToken.uid);
 
   if (checkIfTokenIsValid[0].passwordResetToken === null) return Apiresponse.notFound(res, "Reset token not found");
@@ -185,13 +185,13 @@ async function resetPassword(req, res) {
   if (!user) return Apiresponse.notFound(res, "User not found wrong token used!");
 
   log("Get user information with token", 'info')
-  let query = "SELECT * FROM userTbl WHERE passwordResetToken = ?";
+  let query = queries.selectUserInfoByResetToken;
   const getUserByResetToken = await executeQuery(query, request.resetToken);
   if (getUserByResetToken.length === 0) return Apiresponse.badRequest(res, "User not found wrong token used!");
 
   log("Hashing password");
   const hashedPassword = await generateHash(request.password);
-  query = "UPDATE userTbl SET password = ?, passwordResetToken = NULL WHERE uid = ?`";
+  query = queries.setNewPasswordByUid;
   await executeQuery(query, [hashedPassword, decodedToken.uid]);
 
   log("Sending email with successful password reset", 'success');
