@@ -1,13 +1,12 @@
 const express = require('express');
 const router = express.Router();
-const { isAdmin, getTableNames, getRowsByTableName, insertRows, updateRows, deleteRows } = require('../controllers/adminController');
-const { isAdminSchema, getRowsByTableNameSchema, insertAndUpdateRowsSchema} = require('../sharedFunctions/validationSchemas')
+const { adminController } = require('../controllers/adminController');
 
-router.post('/isAdmin', isAdminSchema, (req, res) => isAdmin(req, res));
-router.get('/getTableNames', (req, res) => getTableNames(req, res));
-router.post('/getTableRows', getRowsByTableNameSchema, (req, res) => getRowsByTableName(req, res));
-router.post('/insertRows', insertAndUpdateRowsSchema, (req, res) => insertRows(req, res));
-router.post('/updateRows', insertAndUpdateRowsSchema, (req, res) => updateRows(req, res));
-router.post('/deleteRows', (req, res) => deleteRows(req, res));
+router.post('/isAdmin', adminController.isAdmin);
+router.get('/getTableNames', adminController.getTableNames);
+router.post('/getTableRows', adminController.getRowsByTableName);
+router.post('/insertRows', adminController.insertRows);
+router.post('/updateRows', adminController.updateRows);
+router.post('/deleteRows', adminController.deleteRows);
 
 module.exports = router;

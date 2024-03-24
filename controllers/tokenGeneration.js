@@ -18,7 +18,8 @@ const createToken = (userData, expirationTimeInMinutes = null) => {
   };
 
   if (expirationTimeInMinutes !== null) {
-      tokenData.expires_at = currentTime + expirationTimeInMinutes * 60;
+    const expirationTime = currentTime + expirationTimeInMinutes * 60;
+    tokenData.expires_at = expirationTime;
   }
 
   const iv = crypto.randomBytes(12);
@@ -31,7 +32,9 @@ const createToken = (userData, expirationTimeInMinutes = null) => {
   const ciphertextWithTag = encryptedToken + ':' + cipher.getAuthTag().toString('hex');
   const signature = hmac.update(ciphertextWithTag).digest('hex');
 
-  return `${iv.toString('hex')}.${ciphertextWithTag}.${signature}`;
+  const finalToken = `${iv.toString('hex')}.${ciphertextWithTag}.${signature}`;
+
+  return finalToken;
 };
 
 const decryptToken = (token) => {
@@ -43,8 +46,7 @@ const decryptToken = (token) => {
   const calculatedSignature = hmac.update(receivedCiphertextWithTag).digest('hex');
 
   if (calculatedSignature !== receivedSignature) {
-    new Error('Token is invalid: Signature mismatch');
-    return {error: "Token is invalid! Signature mismatch"}
+    throw new Error('Token is invalid: Signature mismatch');
   }
 
   // Decryption
@@ -53,7 +55,10 @@ const decryptToken = (token) => {
 
   let decryptedToken = decipher.update(receivedCiphertext, 'hex', 'utf-8');
   decryptedToken += decipher.final('utf-8');
-  return JSON.parse(decryptedToken);
+
+  const tokenData = JSON.parse(decryptedToken);
+
+  return tokenData;
 };
 
 module.exports = { createToken, decryptToken };

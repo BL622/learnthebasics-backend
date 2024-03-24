@@ -1,14 +1,13 @@
 const express = require('express');
 const router = express.Router();
-const { registerPlayer, loginPlayer, forgotPassword, validateResetToken, resetPassword } = require('../controllers/userController');
-const {registerPlayerSchema, loginSchema, forgotPasswordSchema, validateResetTokenSchema, resetPasswordSchema} = require('../sharedFunctions/validationSchemas');
+const { playerController } = require('../controllers/userController');
 
 
-router.post('/register', registerPlayerSchema, (req, res) => registerPlayer(req, res));
-router.post('/login', loginSchema, (req, res) => loginPlayer(req, res));
-router.post('/forgotPassword',forgotPasswordSchema, (req, res) => forgotPassword(req, res));
-router.post('/validateResetToken', validateResetTokenSchema, (req, res) => validateResetToken(req, res));
-router.post('/resetPassword', resetPasswordSchema, (req, res) => resetPassword(req, res));
+router.post('/register', playerController.registerPlayer);
+router.post('/login', playerController.loginUser);
+router.post('/forgotPassword', playerController.forgotPassword);
+router.post('/validateResetToken', playerController.validateResetToken);
+router.post('/resetPassword', playerController.resetPassword);
 
 
 module.exports = router;
