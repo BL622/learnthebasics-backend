@@ -1,6 +1,6 @@
 const fs = require('fs').promises;
 const path = require('path');
-const { log, ErrorHandler } = require('../sharedFunctions/functions');
+const { log } = require('../sharedFunctions/logFunction')
 const transporter = require('../config/emailConfig');
 
 const LOG_PREFIX = 'Email Service: ';
@@ -20,11 +20,11 @@ const readHtmlTemplate = async templatePath => {
   try {
     return await fs.readFile(templatePath, 'utf-8');
   } catch (error) {
-    throw new ErrorHandler(errors.readingTemplate(templatePath), error);
+    throw new Error(errors.readingTemplate(templatePath), error);
   }
 };
 
-const replacePlaceholders = (template, replacements = {}) => 
+const replacePlaceholders = (template, replacements = {}) =>
   template?.replace(/{{(\w+)}}/g, (_, key) => replacements[key] || '');
 
 const sendMail = async (mailOptions) => {
@@ -35,7 +35,7 @@ const sendMail = async (mailOptions) => {
   } catch (error) {
     const errorMessage = errors.sendingEmail();
     log(`${LOG_PREFIX}${errorMessage}: ${error.message}`, 'error');
-    throw new ErrorHandler(errorMessage, error);
+    return { error: true, message: 'Email sending is not possible' }
   }
 };
 
@@ -54,11 +54,11 @@ const sendSpecializedEmail = async (userEmail, subject, templateFile, replacemen
   return sendMail(mailOptions);
 };
 
-const sendPasswordResetEmail = (userEmail, resetToken, username) => 
-  sendSpecializedEmail(userEmail, 'Password Reset', 'index', 
+const sendPasswordResetEmail = (userEmail, resetToken, username) =>
+  sendSpecializedEmail(userEmail, 'Password Reset', 'index',
     { username, link: `<a href="${defaultEmailConfig.passwordResetUrl}${resetToken}" target="_blank">link</a>` });
 
-const passwordResetSuccessful = (userEmail, username) => 
+const passwordResetSuccessful = (userEmail, username) =>
   sendSpecializedEmail(userEmail, 'Password Reset Successful', 'successful', { username });
 
 module.exports = { sendPasswordResetEmail, passwordResetSuccessful };

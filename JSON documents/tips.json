@@ -1,0 +1,38 @@
+{
+  "HTML_tips": [
+    "Use semantic HTML elements for better structure.",
+    "Keep your HTML organized with proper indentation.",
+    "Avoid inline styles; use external CSS instead.",
+    "Include essential meta tags for SEO and mobile compatibility.",
+    "Test your HTML across different browsers.",
+    "Learn basic HTML tags like <div>, <p>, <a>, <img>, and lists.",
+    "Validate your HTML code for errors.",
+    "Optimize images for faster loading.",
+    "Explore HTML5 features like <video> and <canvas>.",
+    "Practice creating simple forms with <form> and inputs."
+  ],
+  "CSS_tips": [
+    "Organize CSS into separate files for clarity.",
+    "Use CSS preprocessors like Sass for efficiency.",
+    "Avoid using !important unless necessary.",
+    "Utilize resets or normalize.css for consistent styling.",
+    "Learn Flexbox and Grid for layout design.",
+    "Optimize CSS performance by minimizing complex selectors.",
+    "Use media queries for responsive design.",
+    "Explore CSS animations and transitions for interactivity.",
+    "Follow naming conventions like BEM for maintainability.",
+    "Document CSS code with comments for clarity."
+  ],
+  "JavaScript_tips": [
+    "Declare variables properly with var, let, or const.",
+    "Enable strict mode for better error handling.",
+    "Separate JavaScript code from HTML for clarity.",
+    "Use descriptive variable names for better readability.",
+    "Handle errors gracefully with try-catch blocks.",
+    "Avoid using eval() due to security risks.",
+    "Leverage event delegation for efficient event handling.",
+    "Optimize performance by minimizing DOM manipulation.",
+    "Explore ES6+ features for modern coding.",
+    "Practice modular JavaScript for maintainable code."
+  ]
+}
