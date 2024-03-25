@@ -1,6 +1,6 @@
 const tipsData = require('../JSON documents/tips.json');
 const { log } = require('../sharedFunctions/logFunction');
-const { executeQuery } = require('../sharedFunctions/functions');
+const { executeQuery, clamp } = require('../sharedFunctions/functions');
 
 async function getRandomTips() {
     let tips = {};
@@ -42,7 +42,7 @@ async function createStatistics(username) {
     stats = { ...stats, ...{ totalIncome: statsRes.reduce((sum, x) => sum + x.totalIncome, 0) } };
 
     log("Calculating total money spent:");
-    stats = { ...stats, ...{ totalSpent: statsRes.reduce((sum, x) => sum + x.totalIncome - x.money, 0) } };
+    stats = { ...stats, ...{ totalSpent: statsRes.reduce((sum, x) => clamp(sum + x.totalIncome - x.money, 0, Infinity), 0) } };
 
     log("Calculating all bought computer parts sum:");
     stats = { ...stats, ...{ totalBoughtParts: statsRes.reduce((total, x) => total + Object.entries(x).filter(([key, value]) => key.startsWith('bought')).reduce((acc, val) => acc + val[1], 0), 0) } };

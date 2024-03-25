@@ -26,5 +26,11 @@ async function compareHash(password, hashedPassword) {
     return await bcrypt.compare(password, hashedPassword)
 }
 
+function clamp(value, min, max) {
+  if (value < min) return min;
+  else if (value > max) return max;
+  return value;
+}
 
-module.exports = { executeQuery, generateHash, compareHash };
+
+module.exports = { executeQuery, generateHash, compareHash, clamp };
