@@ -4,7 +4,7 @@ const Apiresponse = require("../sharedFunctions/response");
 const { executeQuery } = require('../sharedFunctions/functions');
 const { decryptToken } = require('./tokenGeneration');
 const queries = require('../JSON documents/queries.json');
-
+const { log } = require('../sharedFunctions/logFunction');
 async function determineActionByHeader(appType, data, uId) {
     const saveId = data[0].saveId;
     delete data[0]["saveId"];
@@ -23,11 +23,11 @@ async function determineActionByHeader(appType, data, uId) {
 
             break;
         case "update":
-            log('Updating save file:', 'info')
+            log('Updating save file:', 'info');
             const encryptedJobs = data[0]["jobs"];
-            const completedJobs = data[0]["completedJobs"];
+            const completedJobs = data[0]["completedJobs"] | 0;
             const fastestCompletion = data[0]["fastestCompletion"];
-            const totalIncome = data[0]["totalIncome"];
+            const totalIncome = data[0]["totalIncome"] | 0;
             delete data[0]["jobs"];
             delete data[0]["completedJobs"];
             delete data[0]["fastestCompletion"];
