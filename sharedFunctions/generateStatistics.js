@@ -20,7 +20,7 @@ async function createStatistics(username) {
     let stats = {};
     stats.tips = await getRandomTips();
 
-    let query = "SELECT savedata.saveId, statsTbl.completedJobs, statsTbl.fastestCompletion, savedata.money, statsTbl.totalIncome, JSON_EXTRACT(savedata.lastBought, '$.cpu') + 1 AS boughtCpu, JSON_EXTRACT(savedata.lastBought, '$.gpu') + 1 AS boughtGpu, JSON_EXTRACT(savedata.lastBought, '$.ram') + 1 AS boughtRam, JSON_EXTRACT(savedata.lastBought, '$.stg') + 1 AS boughtStg, savedata.time FROM statsTbl INNER JOIN userTbl ON statsTbl.userId = userTbl.uid INNER JOIN savedata ON statsTbl.saveId = savedata.id AND savedata.userId = userTbl.uid WHERE userTbl.username = ? ORDER BY savedata.lastModified DESC";
+    let query = "SELECT savedata.saveId, statsTbl.completedJobs, statsTbl.fastestCompletion, savedata.money, statsTbl.totalIncome, JSON_EXTRACT(savedata.lastBought, '$.cpu') + 1 AS boughtCpu,  JSON_EXTRACT(savedata.lastBought, '$.gpu') + 1 AS boughtGpu, JSON_EXTRACT(savedata.lastBought, '$.ram') + 1 AS boughtRam, JSON_EXTRACT(savedata.lastBought, '$.stg') + 1 AS boughtStg, savedata.time FROM statsTbl INNER JOIN userTbl ON statsTbl.userId = userTbl.uid INNER JOIN savedata ON savedata.userId = userTbl.uid WHERE userTbl.username = ? ORDER BY savedata.lastModified DESC";
     const statsRes = await executeQuery(query, username);
     log(statsRes,'success');
 
@@ -28,10 +28,10 @@ async function createStatistics(username) {
     stats = { ...stats, ...{ overallTime: statsRes.reduce((sum, x) => sum + x.time, 0) } };
 
     log("Calculating completed jobs:");
-    stats = { ...stats, ...{ completedJobs: statsRes.reduce((sum, x) => sum + x.completedJobs, 0) } };
+    stats = { ...stats, ...{ completedJobs: statsRes[0].completedJobs } };
 
     log("Getting fastest completion time:");
-    stats = { ...stats, ...{ fastestCompletion: statsRes.reduce((min, x) => x.fastestCompletion < min ? x.fastestCompletion : min, statsRes[0].fastestCompletion) } };
+    stats = { ...stats, ...{ fastestCompletion: statsRes[0].fastestCompletion } };
 
     log("Calculating ranking in completion time:");
     query = "SELECT DISTINCT fastestCompletion FROM statsTbl";
@@ -39,7 +39,7 @@ async function createStatistics(username) {
     stats = { ...stats, ...{ fastestCompletionPlace: fastestCompletionRes.filter(e => e.fastestCompletion < stats.fastestCompletion).length + 1 } };
 
     log("Calculating total income:");
-    stats = { ...stats, ...{ totalIncome: statsRes.reduce((sum, x) => sum + x.totalIncome, 0) } };
+    stats = { ...stats, ...{ totalIncome: statsRes[0].totalIncome } };
 
     log("Calculating total money spent:");
     stats = { ...stats, ...{ totalSpent: statsRes.reduce((sum, x) => clamp(sum + x.totalIncome - x.money, 0, Infinity), 0) } };

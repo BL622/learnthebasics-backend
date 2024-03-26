@@ -48,8 +48,10 @@ async function handleLoginType(username, password, appType = "") {
 
       break;
     default:
+      query = "SELECT completedJobs, fastestCompletion, totalIncome FROM statsTbl WHERE userId = (SELECT uid FROM userTbl WHERE username = ?)";
+      const statsRes = await executeQuery(query, username);
       response = { 
-        data: [username, createToken(selectRes[0])] 
+        data: [username, createToken(selectRes[0]), statsRes[0]]
       }
       break;
   }

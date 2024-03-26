@@ -34,13 +34,13 @@ async function determineActionByHeader(appType, data, uId) {
             delete data[0]["totalIncome"];
 
             query = queries.updateSaveFile;
-            await executeQuery(query, [data[0], encryptedJobs, completedJobs, fastestCompletion, totalIncome, saveId, uId, saveId, uId, saveId, uId]);
+            await executeQuery(query, [data[0], encryptedJobs, completedJobs, fastestCompletion, totalIncome, saveId, uId, saveId, uId, uId]);
 
             break;
         case "override":
             log('Overriding save file:', 'info')
             query = queries.overrideSaveFile;
-            await executeQuery(query, [uId, saveId, saveId, uId, saveId, uId]);
+            await executeQuery(query, [uId, saveId, saveId, uId]);
 
             break;
     }
