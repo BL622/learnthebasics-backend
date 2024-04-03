@@ -75,7 +75,7 @@ async function getSaves(req, res) {
     const query = queries.selectAllSavesForGame;
     const saveRes = await executeQuery(query, decodedToken.uid);
 
-    if (saveRes.length === 0) return Apiresponse.ok(res, { data:[], message: "User doesn't have saves!" };
+    if (saveRes.length === 0) return Apiresponse.ok(res, { data:[], message: "User doesn't have saves!" });
     log(saveRes, 'success')
     return Apiresponse.ok(res, { message: "Saves retrieved successfully", data: saveRes })
 }
