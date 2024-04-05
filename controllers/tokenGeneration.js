@@ -13,13 +13,13 @@ const createToken = (userData, expirationTimeInMinutes = null) => {
   const tokenData = {
     uid: userData.uid,
     username: userData.username,
-    hashedPassword: userData.password,
+    hashedPassword: userData.password, 
     isAdmin: userData.isAdmin,
     created_at: currentTime,
   };
 
   if (expirationTimeInMinutes !== null) {
-    tokenData.expires_at = currentTime + expirationTimeInMinutes * 60;
+      tokenData.expires_at = currentTime + expirationTimeInMinutes * 60;
   }
 
   const iv = crypto.randomBytes(12);
@@ -45,7 +45,7 @@ const decryptToken = (token) => {
 
   if (calculatedSignature !== receivedSignature) {
     new Error('Token is invalid: Signature mismatch');
-    return { error: "Token is invalid! Signature mismatch" }
+    return {error: "Token is invalid! Signature mismatch"}
   }
 
   // Decryption

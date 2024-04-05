@@ -70,12 +70,12 @@ async function getSaves(req, res) {
 
     log('Decoding token:', 'info');
     const decodedToken = decryptToken(token);
-    if (decodedToken.username.toLowerCase() !== username.toLowerCase()) return Apiresponse.badRequest(res, "Username in the token does not match the provided username");
+    if (decodedToken.username !== username) return Apiresponse.badRequest(res, "Username in the token does not match the provided username");
 
     const query = queries.selectAllSavesForGame;
     const saveRes = await executeQuery(query, decodedToken.uid);
 
-    if (saveRes.length === 0) return Apiresponse.ok(res, { data: [], message: "User doesn't have saves!" });
+    if (saveRes.length === 0) return Apiresponse.ok(res, { data:[], message: "User doesn't have saves!" });
     log(saveRes, 'success')
     return Apiresponse.ok(res, { message: "Saves retrieved successfully", data: saveRes })
 }
@@ -89,7 +89,7 @@ async function setSavesOrUpdate(req, res) {
     const [username, token] = req.body.authCode.split(" ");
     const request = req.body;
     const decodedToken = decryptToken(token);
-    if (decodedToken.username.toLowerCase() !== username.toLowerCase()) return Apiresponse.badRequest(res, "Username in the token does not match the provided username");
+    if (decodedToken.username !== username) return Apiresponse.badRequest(res, "Username in the token does not match the provided username");
 
     const determinedAction = await determineActionByHeader(req.headers["x-save-type"], request.data, decodedToken.uid);
     if (!!determinedAction.error) return Apiresponse.overrideRequest(res, determinedAction.error);
@@ -108,7 +108,7 @@ async function deleteSave(req, res) {
     const [username, token] = request.authCode.split(" ");
 
     const decodedToken = decryptToken(token);
-    if (decodedToken.username.toLowerCase() !== username.toLowerCase()) return ApiResponse.badRequest(res, "Username in the token does not match the provided username");
+    if (decodedToken.username !== username) return ApiResponse.badRequest(res, "Username in the token does not match the provided username");
 
     const query = queries.deleteSaveFile;
     const deleteRes = await executeQuery(query, [decodedToken.uid, request.saveId]);
