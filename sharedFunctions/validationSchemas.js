@@ -4,7 +4,7 @@ const usernameRegex = /^[a-zA-Z][a-zA-Z0-9_.-]{4,24}$/;
 const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@.#$!%?&^])[A-Za-z\d@.#$!%?&]{7,23}$/;
 const tokenRegex = /^[0-9a-f]{24}\.[0-9a-f]+:[0-9a-f]+.[0-9a-f]+$/;
 const authCodeRegex = /^(?:[a-zA-Z][a-zA-Z0-9_.-]{4,24})\s(?:[0-9a-f]{24}\.[0-9a-f]+:[0-9a-f]+.[0-9a-f]+)$/;
-const saveIdRegex = /^.{1,255}$/;
+const saveIdRegex = ^(?=.*[a-zA-Z0-9_.-]).{1,20}$;
 
 const tableNames = ['cpuTbl', 'gpuTbl', 'ramTbl', 'savedata', 'statsTbl', 'stgTbl', 'userTbl'];
 
