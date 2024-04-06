@@ -48,6 +48,7 @@ async function handleLoginType(username, password, appType = "") {
 
       break;
     default:
+      //TODO query to JSON
       query = "SELECT completedJobs, fastestCompletion, totalIncome FROM statsTbl WHERE userId = (SELECT uid FROM userTbl WHERE username = ?)";
       const statsRes = await executeQuery(query, username);
       response = { 
@@ -98,7 +99,8 @@ async function registerPlayer(req, res) {
   delete request["confirmPassword"];
   log("Creating hashed password", 'info')
   request.password = await generateHash(request.password);
-  const insertRes = await executeQuery(insertUser, Object.values(request));
+  log(request)
+  const insertRes = await executeQuery(insertUser, [request.email, request.username, request.password]);
   log(insertRes, 'success')
 
   return Apiresponse.ok(res, { message: "User registered successfully", data: insertRes });

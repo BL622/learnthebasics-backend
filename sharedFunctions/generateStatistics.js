@@ -19,7 +19,7 @@ async function createStatistics(username) {
     log("Generating statistics");
     let stats = {};
     stats.tips = await getRandomTips();
-
+//TODO query to JSON
     let query = "SELECT savedata.saveId, statsTbl.completedJobs, statsTbl.fastestCompletion, savedata.money, statsTbl.totalIncome, JSON_EXTRACT(savedata.lastBought, '$.cpu') + 1 AS boughtCpu,  JSON_EXTRACT(savedata.lastBought, '$.gpu') + 1 AS boughtGpu, JSON_EXTRACT(savedata.lastBought, '$.ram') + 1 AS boughtRam, JSON_EXTRACT(savedata.lastBought, '$.stg') + 1 AS boughtStg, savedata.time FROM statsTbl INNER JOIN userTbl ON statsTbl.userId = userTbl.uid INNER JOIN savedata ON savedata.userId = userTbl.uid WHERE userTbl.username = ? ORDER BY savedata.lastModified DESC";
     const statsRes = await executeQuery(query, username);
     log(statsRes,'success');
@@ -34,6 +34,7 @@ async function createStatistics(username) {
     stats = { ...stats, ...{ fastestCompletion: statsRes[0].fastestCompletion } };
 
     log("Calculating ranking in completion time:");
+    //TODO query to JSON
     query = "SELECT DISTINCT fastestCompletion FROM statsTbl";
     const fastestCompletionRes = await executeQuery(query);
     stats = { ...stats, ...{ fastestCompletionPlace: fastestCompletionRes.filter(e => e.fastestCompletion < stats.fastestCompletion).length + 1 } };

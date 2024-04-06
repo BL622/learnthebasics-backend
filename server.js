@@ -7,7 +7,7 @@ const gameRoutes = require('./routes/gameRoutes');
 const adminRoutes = require('./routes/adminRoutes')
 dotenv.config();
 
-const PORT = process.env.PORT;
+//TODO console.log replace with custom log function
 
 app.use(express.json());
 app.use(cors());
@@ -22,4 +22,4 @@ app.get('/', (req, res) => {
 });
 
 
-app.listen(PORT);
+app.listen(process.env.PORT);
