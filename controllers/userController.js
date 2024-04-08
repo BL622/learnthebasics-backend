@@ -177,12 +177,13 @@ async function resetPassword(req, res) {
   const request = req.body;
 
   log("Resetting password:");
+  log(request, 'info');
 
   const errors = validationResult(req);
   log(errors.array[0], 'error');
   if (!errors.isEmpty()) return Apiresponse.badRequest(res, errors.array()[0].msg);
 
-  const decodedToken = decryptToken(request.resetToken);
+  const decodedToken = decryptToken(request.token);
   if (!!decodedToken.error) return Apiresponse.badRequest(res, decodedToken.error);
 
   const user = await checkUserExists(decodedToken.username, "");
@@ -190,7 +191,7 @@ async function resetPassword(req, res) {
 
   log("Get user information with token", 'info')
   let query = queries.selectUserInfoByResetToken;
-  const getUserByResetToken = await executeQuery(query, request.resetToken);
+  const getUserByResetToken = await executeQuery(query, request.token);
   if (getUserByResetToken.length === 0) return Apiresponse.badRequest(res, "User not found wrong token used!");
 
   log("Hashing password");
