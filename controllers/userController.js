@@ -4,7 +4,7 @@ const { log } = require('../sharedFunctions/logFunction')
 const Apiresponse = require("../sharedFunctions/response");
 const { executeQuery, generateHash, compareHash } = require("../sharedFunctions/functions");
 const { createToken, decryptToken } = require('./tokenGeneration');
-const {createStatistics} = require('../sharedFunctions/generateStatistics');
+const { createStatistics } = require('../sharedFunctions/generateStatistics');
 const emailController = require("./emailController");
 
 const queries = require('../JSON documents/queries.json');
@@ -33,25 +33,25 @@ async function handleLoginType(username, password, appType = "") {
   let selectRes = await executeQuery(query, username);
   const matchPassword = await compareHash(password, selectRes[0].password);
   if (!matchPassword) return false;
-  
+
   log(appType, 'info')
   switch (appType) {
 
     case "web":
       const statsInfo = await createStatistics(username);
 
-      userInfo = { 
+      userInfo = {
         data: [username, createToken(selectRes[0])]
       }
 
-      response = {...userInfo, ...{stats: statsInfo}};
+      response = { ...userInfo, ...{ stats: statsInfo } };
 
       break;
     default:
       //TODO query to JSON
       query = "SELECT completedJobs, fastestCompletion, totalIncome FROM statsTbl WHERE userId = (SELECT uid FROM userTbl WHERE username = ?)";
       const statsRes = await executeQuery(query, username);
-      response = { 
+      response = {
         data: [username, createToken(selectRes[0]), statsRes[0]]
       }
       break;
@@ -200,7 +200,7 @@ async function resetPassword(req, res) {
   await executeQuery(query, [hashedPassword, decodedToken.uid]);
 
   log("Sending email with successful password reset", 'success');
-  const emailResult = await emailController.passwordResetSuccessful(decodedToken.email, decodedToken.username);
+  const emailResult = await emailController.passwordResetSuccessful(getUserByResetToken[0].email, decodedToken.username);
   if (emailResult.error) return Apiresponse.internalServerError(res, "Error sending the password changed email");
   return Apiresponse.ok(res, { message: "Password reset was successful and password changed email sent successfully" });
 }
