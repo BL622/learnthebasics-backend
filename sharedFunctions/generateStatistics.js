@@ -23,6 +23,7 @@ async function createStatistics(username) {
     let query = "SELECT savedata.saveId, statsTbl.completedJobs, statsTbl.fastestCompletion, savedata.money, statsTbl.totalIncome, JSON_EXTRACT(savedata.lastBought, '$.cpu') + 1 AS boughtCpu,  JSON_EXTRACT(savedata.lastBought, '$.gpu') + 1 AS boughtGpu, JSON_EXTRACT(savedata.lastBought, '$.ram') + 1 AS boughtRam, JSON_EXTRACT(savedata.lastBought, '$.stg') + 1 AS boughtStg, savedata.time FROM statsTbl INNER JOIN userTbl ON statsTbl.userId = userTbl.uid INNER JOIN savedata ON savedata.userId = userTbl.uid WHERE userTbl.username = ? ORDER BY savedata.lastModified DESC";
     const statsRes = await executeQuery(query, username);
     log(statsRes,'success');
+    if (statsRes.length === 0) return {...stats, overallTime: 0, completedJobs: 0, fastestCompletion: null, fastestCompletionPlace: -1, totalIncome: 0, totalSpent: 0, totalBoughtParts: 0, mostPlayedSave: "---", lastPlayedSave: "---", saveFileCount: 0};
 
     log("Calculating overall time played:");
     stats = { ...stats, ...{ overallTime: statsRes.reduce((sum, x) => sum + x.time, 0) } };
@@ -46,7 +47,7 @@ async function createStatistics(username) {
     stats = { ...stats, ...{ totalSpent: statsRes.reduce((sum, x) => clamp(sum + x.totalIncome - x.money, 0, Infinity), 0) } };
 
     log("Calculating all bought computer parts sum:");
-    stats = { ...stats, ...{ totalBoughtParts: statsRes.reduce((total, x) => total + Object.entries(x).filter(([key, value]) => key.startsWith('bought')).reduce((acc, val) => acc + val[1], 0), 0) } };
+    stats = { ...stats, ...{ totalBoughtParts: (statsRes.reduce((total, x) => total + Object.entries(x).filter(([key, value]) => key.startsWith('bought')).reduce((acc, val) => acc + val[1], 0), 0) - (statsRes.length * 4)) } };
 
     log("Calculating most played save:");
     stats = { ...stats, ...{ mostPlayedSave: statsRes.reduce((acc, x) => x.time > acc.time ? x : acc).saveId } };

@@ -38,13 +38,11 @@ async function handleLoginType(username, password, appType = "") {
   switch (appType) {
 
     case "web":
-      const statsInfo = await createStatistics(username);
-
       userInfo = {
         data: [username, createToken(selectRes[0])]
       }
 
-      response = { ...userInfo, ...{ stats: statsInfo } };
+      response = { ...userInfo, ...{ stats: await createStatistics(username) } };
 
       break;
     default:
@@ -205,4 +203,13 @@ async function resetPassword(req, res) {
   return Apiresponse.ok(res, { message: "Password reset was successful and password changed email sent successfully" });
 }
 
-module.exports = { registerPlayer, loginPlayer, forgotPassword, validateResetToken, resetPassword };
+async function getStatistics(req, res) {
+  const [username, token] = req.body.authCode.split(' ');
+  log("Getting statistics for user: " + username, "info");
+
+  const userStats = await createStatistics(username);
+
+  return Apiresponse.ok(res, { data: userStats, message: "User statistics retrieved successfully" });
+}
+
+module.exports = { registerPlayer, loginPlayer, forgotPassword, validateResetToken, resetPassword, getStatistics };
