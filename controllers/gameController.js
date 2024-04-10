@@ -5,6 +5,7 @@ const { executeQuery } = require('../sharedFunctions/functions');
 const { decryptToken } = require('./tokenGeneration');
 const queries = require('../JSON documents/queries.json');
 const { log } = require('../sharedFunctions/logFunction');
+
 async function determineActionByHeader(appType, data, uId) {
     const saveId = data[0].saveId;
     delete data[0]["saveId"];
