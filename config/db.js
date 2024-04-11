@@ -1,5 +1,6 @@
 const mysql = require('mysql2/promise');
 const dotenv = require('dotenv');
+const {log} = require('../sharedFunctions/logFunction')
 dotenv.config();
 
 const pool = mysql.createPool({
@@ -15,7 +16,7 @@ pool.getConnection((err, connection) => {
         console.error('Database connection failed:', err);
         return;
     }
-    console.log('Connected to MYSQL database!');
+    log('Connected to MYSQL database!', 'info');
     connection.release();
 });
 

@@ -1,5 +1,6 @@
 const { validationResult } = require("express-validator");
 
+const { log } = require('../sharedFunctions/logFunction')
 const Apiresponse = require("../sharedFunctions/response");
 const { executeQuery, generateHash, compareHash } = require('../sharedFunctions/functions');
 const { decryptToken } = require('./tokenGeneration');
@@ -11,7 +12,7 @@ async function isAdmin(req, res) {
 
     const [username, token] = req.body.authCode.split(' ');
 
-    console.log("Admin checking:");
+    log("Admin checking:");
 
     const decodedToken = decryptToken(token);
 
@@ -54,11 +55,8 @@ async function insertRows(req, res) {
     const query = queries.insertTableInformationAdmin;
     if (request.tableName === "userTbl") request.data[0] = { ...request.data[0], password: await generateHash(request.data[0].password) };
 
-    console.log(request.data)
-
     const insertRes = await executeQuery(query, [[request.tableName], request.data[0]]);
 
-    console.log(insertRes)
     if (!!insertRes.errno) return Apiresponse.duplicate(res, insertRes.sqlMessage);
     return Apiresponse.created(res, { message: "Successful data insertion", data: [insertRes] })
 }
@@ -81,7 +79,6 @@ async function updateRows(req, res) {
         if (changeCheck[0].hasOwnProperty(key) && updatedData[key] === changeCheck[0][key]) delete updatedData[key];
     }
 
-    console.log(updatedData)
     if (request.tableName === "userTbl" && (await compareHash(updatedData.password, changeCheck[0].password))) delete updatedData.password;
     else if (request.tableName === "userTbl" && !(await compareHash(updatedData.password, changeCheck[0].password))) updatedData = { ...updatedData, password: await generateHash(updatedData.password) };
 

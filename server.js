@@ -7,8 +7,6 @@ const gameRoutes = require('./routes/gameRoutes');
 const adminRoutes = require('./routes/adminRoutes')
 dotenv.config();
 
-//TODO console.log replace with custom log function
-
 app.use(express.json());
 app.use(cors());
 app.use(express.urlencoded({ extended: true }));

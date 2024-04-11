@@ -22,5 +22,7 @@
     "insertTableInformationAdmin": "INSERT INTO ?? SET ?",
     "selectForChangesUpdateAdmin": "SELECT * FROM ?? WHERE ?? = ?",
     "updateChangesAdmin": "UPDATE ?? SET ? WHERE ?? = ?",
-    "deleteDataAdmin": "DELETE FROM ?? WHERE ?? = ?"
+    "deleteDataAdmin": "DELETE FROM ?? WHERE ?? = ?",
+    "selectDataForStats": "SELECT savedata.saveId, statsTbl.completedJobs, statsTbl.fastestCompletion, savedata.money, statsTbl.totalIncome, JSON_EXTRACT(savedata.lastBought, '$.cpu') + 1 AS boughtCpu,  JSON_EXTRACT(savedata.lastBought, '$.gpu') + 1 AS boughtGpu, JSON_EXTRACT(savedata.lastBought, '$.ram') + 1 AS boughtRam, JSON_EXTRACT(savedata.lastBought, '$.stg') + 1 AS boughtStg, savedata.time FROM statsTbl INNER JOIN userTbl ON statsTbl.userId = userTbl.uid INNER JOIN savedata ON savedata.userId = userTbl.uid WHERE userTbl.username = ? ORDER BY savedata.lastModified DESC",
+    "selectFastCompForRanking": "SELECT DISTINCT fastestCompletion FROM statsTbl"
 }
